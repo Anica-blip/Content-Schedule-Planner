@@ -1,0 +1,22 @@
+name = "content-schedule-planner"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "."
+
+# IMPORTANT: Set account_id in Cloudflare Dashboard
+# All secrets are managed in Cloudflare Dashboard → Pages → Settings → Environment variables
+# NEVER commit actual values to git!
+
+# R2 bucket binding for image storage
+[[r2_buckets]]
+binding = "schedule-planner"
+bucket_name = "schedule-planner"
+preview_bucket_name = "schedule-planner"
+
+# Environment variables are set in Cloudflare Dashboard:
+# - R2_ACCOUNT_ID
+# - R2_BUCKET_NAME
+# - R2_PUBLIC_URL
+# - CLOUDFLARE_API_TOKEN
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
