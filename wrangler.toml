@@ -10,7 +10,11 @@ bucket_name = "schedule-planner"
 # Environment Variables
 # Set these in Cloudflare Dashboard → Workers → Settings → Variables
 [vars]
-R2_PUBLIC_URL = "https://content-schedule-planner.pages.dev"
+R2_PUBLIC_URL = "https://planner.3c-public-library.org"
+
+# Worker Route Configuration
+# Route: planner.3c-public-library.org/*
+# This connects the Worker to the custom subdomain
 
 # All secrets managed in Cloudflare Dashboard:
 # - SUPABASE_URL
