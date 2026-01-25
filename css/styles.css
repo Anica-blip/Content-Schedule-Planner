@@ -219,8 +219,8 @@ body {
 .btn-traffic-light {
     width: 45px;
     height: 45px;
-    background: var(--lighter-purple);
-    border: 2px solid var(--light-purple);
+    background: var(--lighter-purple) !important;
+    border: 2px solid var(--light-purple) !important;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -230,23 +230,25 @@ body {
 }
 
 .btn-traffic-light.connecting {
-    background: #f39c12;
-    border-color: #f39c12;
-    animation: pulse 2s infinite;
+    background: var(--lighter-purple) !important;
+    border-color: var(--light-purple) !important;
 }
 
 .btn-traffic-light.connected {
-    background: #27ae60;
-    border-color: #27ae60;
+    background: var(--lighter-purple) !important;
+    border-color: var(--light-purple) !important;
 }
 
 .btn-traffic-light.error {
-    background: #e74c3c;
-    border-color: #e74c3c;
+    background: var(--lighter-purple) !important;
+    border-color: var(--light-purple) !important;
 }
 
 .btn-traffic-light svg {
-    fill: #1a0b2e;
+    fill: #1a0b2e !important;
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
 }
 
 .btn-traffic-light:hover {
