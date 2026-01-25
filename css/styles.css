@@ -163,7 +163,7 @@ body {
 
 /* Expand time slots for week/day to fit containers */
 .fc-timegrid-slot {
-    min-height: 60px !important;
+    min-height: 80px !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
