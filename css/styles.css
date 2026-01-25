@@ -128,9 +128,6 @@ body {
 .fc-col-header-cell { background-color: #b19cd9 !important; }
 .fc-col-header-cell-cushion { color: #1a0b2e !important; font-weight: 600; }
 
-/* Smaller image preview */
-#imagePreview { max-width: 200px !important; max-height: 200px !important; }
-
 /* Unified compact event styling for ALL views */
 .fc-event { 
     height: 55px !important; 
@@ -146,40 +143,15 @@ body {
     width: 90px !important;
 }
 
-/* Week/Day view events - same size as month */
+/* Week/Day view events - use default positioning, just set size */
 .fc-timegrid-event {
     height: 55px !important;
     width: 90px !important;
-    position: static !important;
-    display: inline-block !important;
-    margin: 2px 4px 2px 0 !important;
-    vertical-align: top !important;
 }
 
-/* Time slot layout */
-.fc-timegrid-event-harness { 
-    position: static !important;
-    display: inline-block !important;
-    vertical-align: top !important;
-    margin-right: 4px !important;
-}
-
-.fc-timegrid-event-harness-inset {
-    position: static !important;
-}
-
-.fc-timegrid-col-events {
-    position: static !important;
-    display: block !important;
-}
-
-.fc-timegrid-slot {
-    height: auto !important;
-    min-height: 60px !important;
-}
-
-/* Force event content to be visible */
+/* Light background for containers to show thumbnails */
 .fc-event-main {
+    background: rgba(255, 255, 255, 0.95) !important;
     padding: 0 !important;
     height: 100% !important;
 }
@@ -198,4 +170,10 @@ body {
     opacity: 1 !important;
     width: 40px !important;
     height: 40px !important;
+}
+
+/* Smaller image preview in modal */
+#imagePreview { 
+    max-width: 200px !important; 
+    max-height: 200px !important; 
 }
