@@ -80,7 +80,7 @@ function initCalendar() {
             html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">';
             
             // Title (max 2 lines) - dark text
-            html += '<div style="font-size:11px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#1a0b2e;">' + (post.title || 'Untitled') + '</div>';
+            html += '<div style="font-size:9px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#1a0b2e;">' + (post.title || 'Untitled') + '</div>';
             
             // Time (no icon) - dark text
             if (post.time) {
