@@ -1,8 +1,9 @@
+/* Traffic Light - Top Toolbar Center */
 #supabase-indicator {
     position: fixed;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 1000;
     cursor: pointer;
 }
@@ -10,73 +11,135 @@
 .traffic-light {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    background: var(--lighter-purple);
+    border: 2px solid var(--light-purple);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
 }
 
-.traffic-light.connected { background: #27ae60; }
-.traffic-light.connecting { background: #f39c12; animation: pulse 2s infinite; }
-.traffic-light.error { background: #e74c3c; }
-.traffic-light svg { fill: white; width: 24px; height: 24px; }
+.traffic-light.connected {
+    background: #27ae60;
+    border-color: #27ae60;
+}
 
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.traffic-light.connecting {
+    background: #f39c12;
+    border-color: #f39c12;
+    animation: pulse 2s infinite;
+}
 
+.traffic-light.error {
+    background: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.traffic-light svg {
+    fill: #1a0b2e;
+    width: 28px;
+    height: 28px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Navigation Panel */
 #nav-panel {
     position: fixed;
-    left: -80px;
+    left: -90px;
     top: 180px;
-    width: 80px;
-    height: auto;
+    width: 90px;
+    max-height: calc(100vh - 200px);
     background: rgba(42, 27, 78, 0.15);
     backdrop-filter: blur(10px);
     transition: left 0.3s ease;
     z-index: 999;
     padding: 10px;
     border-radius: 0 12px 12px 0;
+    overflow-y: auto;
 }
 
-#nav-panel.open { left: 0; }
+#nav-panel::-webkit-scrollbar {
+    width: 4px;
+}
 
+#nav-panel::-webkit-scrollbar-thumb {
+    background: rgba(155, 89, 182, 0.5);
+    border-radius: 2px;
+}
+
+#nav-panel.open {
+    left: 0;
+}
+
+/* Toggle Button */
 .nav-toggle {
     position: absolute;
-    right: -40px;
+    right: -55px;
     top: 0;
-    width: 40px;
-    height: 40px;
-    background: rgba(42, 27, 78, 0.3);
+    width: 55px;
+    height: 55px;
+    background: var(--lighter-purple);
+    border: 2px solid var(--light-purple);
     border-radius: 0 8px 8px 0;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.nav-toggle:hover { background: rgba(155, 89, 182, 0.5); }
-.nav-toggle svg { fill: white; width: 20px; height: 20px; }
+.nav-toggle:hover {
+    background: var(--light-purple);
+    transform: translateX(3px);
+}
 
+.nav-toggle svg {
+    fill: #1a0b2e;
+    width: 32px;
+    height: 32px;
+}
+
+/* Navigation Content */
 .nav-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
+/* Icon Containers */
 .nav-icon {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
+    background: var(--lighter-purple);
+    border: 2px solid var(--light-purple);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    border-radius: 8px;
+    text-decoration: none;
 }
 
-.nav-icon:hover { background: rgba(155, 89, 182, 0.3); }
-.nav-icon svg { fill: white; width: 28px; height: 28px; }
+.nav-icon:hover {
+    background: var(--light-purple);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
+}
 
+.nav-icon svg {
+    fill: #1a0b2e;
+    width: 32px;
+    height: 32px;
+}
+
+/* Tooltip */
 .nav-icon::after {
     content: attr(title);
     position: absolute;
@@ -91,7 +154,17 @@
     pointer-events: none;
     transition: opacity 0.3s ease;
     font-size: 14px;
+    font-weight: 500;
+    z-index: 1001;
 }
 
-.nav-icon:hover::after { opacity: 1; }
-.nav-icon.mobile-view { margin-top: 20px; border-top: 1px solid rgba(155, 89, 182, 0.3); padding-top: 10px; }
+.nav-icon:hover::after {
+    opacity: 1;
+}
+
+/* Mobile View Separator */
+.nav-icon.mobile-view {
+    margin-top: 20px;
+    border-top: 2px solid var(--light-purple);
+    padding-top: 10px;
+}
