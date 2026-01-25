@@ -128,6 +128,12 @@ body {
 .fc-col-header-cell { background-color: #b19cd9 !important; }
 .fc-col-header-cell-cushion { color: #1a0b2e !important; font-weight: 600; }
 
+
+/* Smaller image preview in modal */
+#imagePreview { 
+    max-width: 200px !important; 
+    max-height: 200px !important; 
+}
 /* Unified compact event styling for ALL views */
 .fc-event { 
     height: 55px !important; 
@@ -143,15 +149,26 @@ body {
     width: 90px !important;
 }
 
-/* Week/Day view events - use default positioning, just set size */
+/* Week/Day view events */
 .fc-timegrid-event {
     height: 55px !important;
     width: 90px !important;
 }
 
-/* Light background for containers to show thumbnails */
+/* Expand time slots to fit containers */
+.fc-timegrid-slot {
+    min-height: 65px !important;
+}
+
+/* Allow multiple events at same time to appear side by side */
+.fc-timegrid-event-harness {
+    display: inline-block !important;
+    vertical-align: top !important;
+    margin-right: 4px !important;
+}
+
+/* Light background already in event content */
 .fc-event-main {
-    background: rgba(255, 255, 255, 0.95) !important;
     padding: 0 !important;
     height: 100% !important;
 }
@@ -160,7 +177,7 @@ body {
     height: 100% !important;
 }
 
-/* Ensure images display */
+/* Force images to display */
 .fc-event img,
 .fc-event-main img,
 .fc-daygrid-event img,

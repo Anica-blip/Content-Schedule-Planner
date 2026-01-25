@@ -11,9 +11,9 @@ const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
     facebook: { name: 'Facebook', abbr: 'FB', icon: '📘', color: '#1877f2' },
     linkedin: { name: 'LinkedIn', abbr: 'LK', icon: '💼', color: '#0077b5' },
-    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
+    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '��', color: '#1da1f2' },
     youtube: { name: 'YouTube', abbr: 'YT', icon: '📺', color: '#ff0000' },
-    tiktok: { name: 'TikTok', abbr: 'TK', icon: '🎵', color: '#000000' },
+    tiktok: { name: 'TikTok', abbr: 'TK', icon: '��', color: '#000000' },
     telegram: { name: 'Telegram', abbr: 'TG', icon: '✈️', color: '#0088cc' },
     pinterest: { name: 'Pinterest', abbr: 'PI', icon: '📌', color: '#bd081c' },
     whatsapp: { name: 'WhatsApp Business', abbr: 'WB', icon: '💬', color: '#25d366' },
@@ -64,25 +64,27 @@ function initCalendar() {
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             
+            console.log('Rendering event:', post.title, 'Thumbnail:', post.thumbnail);
+            
             // Compact container layout: thumbnail left, info right
-            let html = '<div style="display:flex; gap:6px; padding:4px; align-items:flex-start; height:100%; overflow:hidden;">';
+            let html = '<div style="display:flex; gap:6px; padding:4px; align-items:flex-start; height:100%; overflow:hidden; background:rgba(255,255,255,0.95); border-radius:6px;">';
             
             // Thumbnail (left side)
             if (post.thumbnail) {
-                html += '<img src="' + post.thumbnail + '" style="width:40px; height:40px; object-fit:cover; border-radius:4px; flex-shrink:0;">';
+                html += '<img src="' + post.thumbnail + '" alt="Post thumbnail" style="width:40px; height:40px; object-fit:cover; border-radius:4px; flex-shrink:0; display:block !important;" onerror="console.error(\'Image failed to load:\', this.src)">';
             } else {
-                html += '<div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:4px; flex-shrink:0;"></div>';
+                html += '<div style="width:40px; height:40px; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px;">📷</div>';
             }
             
-            // Info (right side)
+            // Info (right side) - dark text on light background
             html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">';
             
-            // Title (max 2 lines)
-            html += '<div style="font-size:11px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">' + (post.title || 'Untitled') + '</div>';
+            // Title (max 2 lines) - dark text
+            html += '<div style="font-size:11px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#1a0b2e;">' + (post.title || 'Untitled') + '</div>';
             
-            // Time (no icon)
+            // Time (no icon) - dark text
             if (post.time) {
-                html += '<div style="font-size:9px; opacity:0.9;">' + post.time + '</div>';
+                html += '<div style="font-size:9px; color:#1a0b2e; opacity:0.7;">' + post.time + '</div>';
             }
             
             // Platform badge
@@ -124,6 +126,8 @@ async function loadPosts() {
         if (post.scheduled_time) {
             startDateTime = post.scheduled_date + 'T' + post.scheduled_time;
         }
+        
+        console.log('Adding event:', post.title, 'Image URL:', post.image_url);
         
         calendar.addEvent({
             id: post.id,
