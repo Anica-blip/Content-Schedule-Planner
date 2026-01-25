@@ -20,6 +20,12 @@ const PLATFORMS = {
 
 async function initApp() {
     console.log('🚀 Initializing 3C Content Schedule Planner...');
+    
+    const supabaseInit = await supabaseAPI.init();
+    if (!supabaseInit) {
+        console.warn('⚠️ Supabase not configured, using localStorage fallback');
+    }
+    
     initCalendar();
     await loadPosts();
     console.log('✅ App initialized');
@@ -70,8 +76,22 @@ function initCalendar() {
 }
 
 async function loadPosts() {
-    // For now, load from localStorage until Supabase is configured
-    const posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    let posts = [];
+    
+    // Try Supabase first
+    if (supabaseAPI.initialized) {
+        const currentDate = calendar.getDate();
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        posts = await supabaseAPI.getPosts(
+            startOfMonth.toISOString().split('T')[0],
+            endOfMonth.toISOString().split('T')[0]
+        );
+    } else {
+        // Fallback to localStorage
+        posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    }
     
     calendar.removeAllEvents();
     
@@ -80,7 +100,7 @@ async function loadPosts() {
         
         calendar.addEvent({
             id: post.id,
-            title: post.title,
+            title: post.title || post.content?.substring(0, 30) + '...',
             start: post.scheduled_date,
             backgroundColor: platform.color,
             borderColor: platform.color,
@@ -112,8 +132,16 @@ function openCreatePostModal(date = null) {
 }
 
 async function openEditPostModal(postId) {
-    const posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-    const post = posts.find(p => p.id === postId);
+    let post = null;
+    
+    // Try Supabase first
+    if (supabaseAPI.initialized) {
+        post = await supabaseAPI.getPost(postId);
+    } else {
+        // Fallback to localStorage
+        const posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+        post = posts.find(p => p.id === postId);
+    }
     
     if (!post) {
         alert('Failed to load post');
@@ -180,49 +208,92 @@ async function handlePostSubmit(event) {
     }
     
     const postData = {
-        id: postId || 'post_' + Date.now(),
         platform,
         title,
         content,
         scheduled_date: scheduledDate,
         scheduled_time: scheduledTime,
         image_url: imageUrl,
-        status: 'scheduled',
-        created_at: currentPost?.created_at || new Date().toISOString()
+        status: 'scheduled'
     };
     
-    let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    let result;
     
-    if (postId) {
-        posts = posts.map(p => p.id === postId ? postData : p);
+    // Try Supabase first
+    if (supabaseAPI.initialized) {
+        if (postId) {
+            result = await supabaseAPI.updatePost(postId, postData);
+        } else {
+            result = await supabaseAPI.createPost(postData);
+        }
+        
+        if (result.success) {
+            closePostModal();
+            await loadPosts();
+            alert(postId ? 'Post updated!' : 'Post created!');
+        } else {
+            alert('Failed to save post: ' + result.error);
+        }
     } else {
-        posts.push(postData);
+        // Fallback to localStorage
+        postData.id = postId || 'post_' + Date.now();
+        postData.created_at = currentPost?.created_at || new Date().toISOString();
+        
+        let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+        
+        if (postId) {
+            posts = posts.map(p => p.id === postId ? postData : p);
+        } else {
+            posts.push(postData);
+        }
+        
+        localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+        
+        closePostModal();
+        await loadPosts();
+        alert(postId ? 'Post updated!' : 'Post created!');
     }
-    
-    localStorage.setItem('scheduledPosts', JSON.stringify(posts));
-    
-    closePostModal();
-    await loadPosts();
-    alert(postId ? 'Post updated!' : 'Post created!');
 }
 
 async function handleDeletePost() {
     if (!currentPost) return;
     if (!confirm('Delete this post?')) return;
     
-    let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-    posts = posts.filter(p => p.id !== currentPost.id);
-    localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+    let result;
     
-    closePostModal();
-    await loadPosts();
-    alert('Post deleted!');
+    // Try Supabase first
+    if (supabaseAPI.initialized) {
+        result = await supabaseAPI.deletePost(currentPost.id);
+        
+        if (result.success) {
+            closePostModal();
+            await loadPosts();
+            alert('Post deleted!');
+        } else {
+            alert('Failed to delete post');
+        }
+    } else {
+        // Fallback to localStorage
+        let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+        posts = posts.filter(p => p.id !== currentPost.id);
+        localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+        
+        closePostModal();
+        await loadPosts();
+        alert('Post deleted!');
+    }
 }
 
 async function updatePostDate(postId, newDate) {
-    let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-    posts = posts.map(p => p.id === postId ? { ...p, scheduled_date: newDate } : p);
-    localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+    // Try Supabase first
+    if (supabaseAPI.initialized) {
+        await supabaseAPI.updatePost(postId, { scheduled_date: newDate });
+    } else {
+        // Fallback to localStorage
+        let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+        posts = posts.map(p => p.id === postId ? { ...p, scheduled_date: newDate } : p);
+        localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+    }
 }
 
 async function uploadImage(file) {
