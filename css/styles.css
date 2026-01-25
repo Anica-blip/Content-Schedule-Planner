@@ -131,12 +131,32 @@ body {
 /* Smaller image preview */
 #imagePreview { max-width: 200px !important; max-height: 200px !important; }
 
-/* Compact events */
-.fc-event { height: 50px !important; border-radius: 6px !important; }
-.fc-daygrid-event { height: 50px !important; }
-.fc-timegrid-event { min-height: 50px !important; max-width: 150px !important; }
+/* Unified compact event styling for ALL views */
+.fc-event { 
+    height: 55px !important; 
+    width: 90px !important;
+    border-radius: 6px !important; 
+    overflow: hidden !important;
+    padding: 0 !important;
+}
 
-/* Day/Week view - proper time-based layout */
+/* Month view events */
+.fc-daygrid-event { 
+    height: 55px !important; 
+    width: 90px !important;
+}
+
+/* Week/Day view events - same size as month */
+.fc-timegrid-event {
+    height: 55px !important;
+    width: 90px !important;
+    position: static !important;
+    display: inline-block !important;
+    margin: 2px 4px 2px 0 !important;
+    vertical-align: top !important;
+}
+
+/* Time slot layout */
 .fc-timegrid-event-harness { 
     position: static !important;
     display: inline-block !important;
@@ -148,31 +168,34 @@ body {
     position: static !important;
 }
 
-/* Allow time slots to expand and fit multiple posts horizontally */
-.fc-timegrid-slot {
-    height: auto !important;
-    min-height: 60px !important;
-}
-
 .fc-timegrid-col-events {
     position: static !important;
     display: block !important;
 }
 
-/* Events left-aligned, side by side in same time slot */
-.fc-timegrid-event {
-    position: static !important;
-    display: inline-block !important;
-    width: 140px !important;
-    min-height: 50px !important;
-    max-height: 60px !important;
-    margin: 2px 4px 2px 0 !important;
-    vertical-align: top !important;
+.fc-timegrid-slot {
+    height: auto !important;
+    min-height: 60px !important;
 }
 
-/* Force thumbnails to display */
-.fc-event-main img {
+/* Force event content to be visible */
+.fc-event-main {
+    padding: 0 !important;
+    height: 100% !important;
+}
+
+.fc-event-main-frame {
+    height: 100% !important;
+}
+
+/* Ensure images display */
+.fc-event img,
+.fc-event-main img,
+.fc-daygrid-event img,
+.fc-timegrid-event img {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    width: 40px !important;
+    height: 40px !important;
 }
