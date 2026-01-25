@@ -134,30 +134,36 @@ body {
     max-width: 200px !important; 
     max-height: 200px !important; 
 }
-/* Unified compact event styling for ALL views */
+/* Base event styling */
 .fc-event { 
-    height: 55px !important; 
-    width: 90px !important;
     border-radius: 6px !important; 
     overflow: hidden !important;
     padding: 0 !important;
 }
 
-/* Month view events */
+/* Month view events - FULL SIZE (don't touch) */
 .fc-daygrid-event { 
     height: 55px !important; 
     width: 90px !important;
+    min-height: 55px !important;
+    max-height: 55px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
 }
 
-/* Week/Day view events */
+/* Week/Day view events - HALF SIZE */
 .fc-timegrid-event {
-    height: 55px !important;
-    width: 90px !important;
+    height: 50px !important;
+    width: 45px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    min-width: 45px !important;
+    max-width: 45px !important;
 }
 
-/* Expand time slots to fit containers */
+/* Smaller time slots for week/day */
 .fc-timegrid-slot {
-    min-height: 65px !important;
+    min-height: 55px !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
@@ -179,14 +185,22 @@ body {
 
 /* Force images to display */
 .fc-event img,
-.fc-event-main img,
-.fc-daygrid-event img,
-.fc-timegrid-event img {
+.fc-event-main img {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+}
+
+/* Month view images - full size */
+.fc-daygrid-event img {
     width: 40px !important;
     height: 40px !important;
+}
+
+/* Week/Day view images - smaller */
+.fc-timegrid-event img {
+    width: 20px !important;
+    height: 20px !important;
 }
 
 /* Smaller image preview in modal */
