@@ -208,3 +208,55 @@ body {
     max-width: 200px !important; 
     max-height: 200px !important; 
 }
+/* Header button group */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Traffic light button in header */
+.btn-traffic-light {
+    width: 45px;
+    height: 45px;
+    background: var(--lighter-purple);
+    border: 2px solid var(--light-purple);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-traffic-light.connecting {
+    background: #f39c12;
+    border-color: #f39c12;
+    animation: pulse 2s infinite;
+}
+
+.btn-traffic-light.connected {
+    background: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-traffic-light.error {
+    background: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-traffic-light svg {
+    fill: #1a0b2e;
+}
+
+.btn-traffic-light:hover {
+    transform: scale(1.05);
+}
+
+/* Make New Post button square */
+.btn-create {
+    width: 110px;
+    height: 45px;
+    background: var(--orange);
+    border-radius: 8px;
+}

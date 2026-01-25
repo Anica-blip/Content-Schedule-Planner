@@ -11,8 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=1.1.1">
-    <link rel="stylesheet" href="css/navigation.css?v=1.0.2">
+    <link rel="stylesheet" href="css/styles.css?v=1.1.2">
+    <link rel="stylesheet" href="css/navigation.css?v=1.0.3">
     
     <!-- Supabase Configuration -->
     <script>
@@ -27,7 +27,15 @@
             <img src="public/logo.png" alt="3C Logo" class="logo">
             <h1 class="title">3C Content Schedule Planner</h1>
         </div>
-        <button class="btn btn-create" onclick="openCreatePostModal()">+ New Post</button>
+        <div class="header-buttons">
+            <button id="supabase-indicator" class="btn btn-traffic-light" title="Supabase Connection">
+                <svg viewBox="0 0 384 512" width="18">
+                    <path d="M384 192h-64v-37.88c37.2-13.22 64-48.38 64-90.12h-64V32c0-17.67-14.33-32-32-32H96C78.33 0 64 14.33 64 32v32H0c0 41.74 26.8 76.9 64 90.12V192H0c0 41.74 26.8 76.9 64 90.12V320H0c0 42.84 28.25 78.69 66.99 91.05C79.42 468.72 130.6 512 192 512s112.58-43.28 125.01-100.95C355.75 398.69 384 362.84 384 320h-64v-37.88c37.2-13.22 64-48.38 64-90.12zM192 416c-26.51 0-48-21.49-48-48s21.49-48 48-48 48 21.49 48 48-21.49 48-48 48zm0-128c-26.51 0-48-21.49-48-48s21.49-48 48-48 48 21.49 48 48-21.49 48-48 48zm0-128c-26.51 0-48-21.49-48-48s21.49-48 48-48 48 21.49 48 48-21.49 48-48 48z"/>
+                </svg>
+            </button>
+            <button class="btn btn-create" onclick="openCreatePostModal()">+ New Post</button>
+        </div>
+    </header>
     </header>
 
     <div class="container">
@@ -92,8 +100,8 @@
         </div>
     </div>
 
-    <script src="js/supabaseAPI.js?v=1.1.1"></script>
-    <script src="js/app.js?v=1.1.1"></script>
-    <script src="js/navigation.js?v=1.0.2"></script>
+    <script src="js/supabaseAPI.js?v=1.1.2"></script>
+    <script src="js/app.js?v=1.1.2"></script>
+    <script src="js/navigation.js?v=1.0.3"></script>
 </body>
 </html>
