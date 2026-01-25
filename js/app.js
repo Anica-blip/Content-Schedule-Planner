@@ -7,15 +7,19 @@ let currentPost = null;
 let selectedImageFile = null;
 
 // Platform configuration with abbreviations and colors
+// Platform configuration with abbreviations and colors (matching dashboard)
 const PLATFORMS = {
+    instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
     facebook: { name: 'Facebook', abbr: 'FB', icon: '📘', color: '#1877f2' },
-    twitter: { name: 'Twitter/X', abbr: 'TW', icon: '🐦', color: '#1da1f2' },
-    instagram: { name: 'Instagram', abbr: 'IG', icon: '📸', color: '#e4405f' },
-    linkedin: { name: 'LinkedIn', abbr: 'LI', icon: '💼', color: '#0077b5' },
-    tiktok: { name: 'TikTok', abbr: 'TT', icon: '🎵', color: '#000000' },
+    linkedin: { name: 'LinkedIn', abbr: 'LK', icon: '💼', color: '#0077b5' },
+    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
     youtube: { name: 'YouTube', abbr: 'YT', icon: '📺', color: '#ff0000' },
+    tiktok: { name: 'TikTok', abbr: 'TK', icon: '🎵', color: '#000000' },
     telegram: { name: 'Telegram', abbr: 'TG', icon: '✈️', color: '#0088cc' },
-    pinterest: { name: 'Pinterest', abbr: 'PT', icon: '📌', color: '#bd081c' }
+    pinterest: { name: 'Pinterest', abbr: 'PI', icon: '📌', color: '#bd081c' },
+    whatsapp: { name: 'WhatsApp Business', abbr: 'WB', icon: '💬', color: '#25d366' },
+    discord: { name: 'Discord', abbr: 'DC', icon: '🎮', color: '#5865f2' },
+    forum: { name: 'Forum', abbr: 'FM', icon: '💭', color: '#ff6b35' }
 };
 
 async function initApp() {
