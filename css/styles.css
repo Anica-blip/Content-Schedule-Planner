@@ -135,3 +135,33 @@ body {
 .fc-event { height: 50px !important; border-radius: 6px !important; }
 .fc-daygrid-event { height: 50px !important; }
 .fc-timegrid-event { min-height: 50px !important; max-width: 150px !important; }
+
+/* Day/Week view - column layout for posts side by side */
+.fc-timegrid-event-harness { 
+    position: relative !important; 
+    display: inline-block !important;
+    vertical-align: top !important;
+}
+
+.fc-timegrid-col-events {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
+}
+
+/* Make events fit side by side in columns */
+.fc-timegrid-event {
+    position: relative !important;
+    width: 140px !important;
+    min-height: 50px !important;
+    max-height: 60px !important;
+    margin: 0 !important;
+}
+
+/* Ensure thumbnails display properly */
+.fc-event img {
+    display: block !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+}

@@ -6,7 +6,6 @@ let calendar;
 let currentPost = null;
 let selectedImageFile = null;
 
-// Platform configuration with abbreviations and colors
 // Platform configuration with abbreviations and colors (matching dashboard)
 const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
@@ -48,6 +47,8 @@ function initCalendar() {
         selectable: true,
         height: 'auto',
         eventMaxStack: 3,
+        dayMaxEventRows: false,
+        eventOrder: 'start',
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
@@ -79,13 +80,13 @@ function initCalendar() {
             // Title (max 2 lines)
             html += '<div style="font-size:11px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">' + (post.title || 'Untitled') + '</div>';
             
-            // Time
+            // Time (no icon)
             if (post.time) {
-                html += '<div style="font-size:9px; opacity:0.9;">⏰ ' + post.time + '</div>';
+                html += '<div style="font-size:9px; opacity:0.9;">' + post.time + '</div>';
             }
             
             // Platform badge
-            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:8px; font-weight:700; padding:2px 5px; border-radius:3px; width:fit-content;">' + platform.abbr + '</div>';
+            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:8px; font-weight:700; padding:2px 5px; border-radius:3px; width:fit-content; margin-top:auto;">' + platform.abbr + '</div>';
             
             html += '</div></div>';
             
@@ -118,10 +119,16 @@ async function loadPosts() {
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
         
+        // Create datetime for proper sorting
+        let startDateTime = post.scheduled_date;
+        if (post.scheduled_time) {
+            startDateTime = post.scheduled_date + 'T' + post.scheduled_time;
+        }
+        
         calendar.addEvent({
             id: post.id,
             title: post.title || post.content?.substring(0, 30) + '...',
-            start: post.scheduled_date,
+            start: startDateTime,
             backgroundColor: platform.color,
             borderColor: platform.color,
             extendedProps: {
