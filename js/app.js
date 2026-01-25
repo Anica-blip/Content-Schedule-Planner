@@ -6,16 +6,16 @@ let calendar;
 let currentPost = null;
 let selectedImageFile = null;
 
-// Platform configuration with icons and colors
+// Platform configuration with abbreviations and colors
 const PLATFORMS = {
-    facebook: { name: 'Facebook', icon: '📘', color: '#1877f2' },
-    twitter: { name: 'Twitter/X', icon: '🐦', color: '#1da1f2' },
-    instagram: { name: 'Instagram', icon: '📸', color: '#e4405f' },
-    linkedin: { name: 'LinkedIn', icon: '💼', color: '#0077b5' },
-    tiktok: { name: 'TikTok', icon: '🎵', color: '#000000' },
-    youtube: { name: 'YouTube', icon: '📺', color: '#ff0000' },
-    telegram: { name: 'Telegram', icon: '✈️', color: '#0088cc' },
-    pinterest: { name: 'Pinterest', icon: '📌', color: '#bd081c' }
+    facebook: { name: 'Facebook', abbr: 'FB', icon: '📘', color: '#1877f2' },
+    twitter: { name: 'Twitter/X', abbr: 'TW', icon: '🐦', color: '#1da1f2' },
+    instagram: { name: 'Instagram', abbr: 'IG', icon: '📸', color: '#e4405f' },
+    linkedin: { name: 'LinkedIn', abbr: 'LI', icon: '💼', color: '#0077b5' },
+    tiktok: { name: 'TikTok', abbr: 'TT', icon: '🎵', color: '#000000' },
+    youtube: { name: 'YouTube', abbr: 'YT', icon: '📺', color: '#ff0000' },
+    telegram: { name: 'Telegram', abbr: 'TG', icon: '✈️', color: '#0088cc' },
+    pinterest: { name: 'Pinterest', abbr: 'PT', icon: '📌', color: '#bd081c' }
 };
 
 async function initApp() {
@@ -43,6 +43,7 @@ function initCalendar() {
         editable: true,
         selectable: true,
         height: 'auto',
+        eventMaxStack: 3,
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
@@ -56,18 +57,33 @@ function initCalendar() {
         },
         eventContent: function(arg) {
             const post = arg.event.extendedProps;
-            const platform = PLATFORMS[post.platform] || { icon: '📝', color: '#9b59b6' };
+            const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             
-            let html = '<div style="padding:4px;">';
-            html += '<div style="font-size:16px; margin-bottom:2px;">' + platform.icon + '</div>';
+            // Compact container layout: thumbnail left, info right
+            let html = '<div style="display:flex; gap:6px; padding:4px; align-items:flex-start; height:100%; overflow:hidden;">';
+            
+            // Thumbnail (left side)
             if (post.thumbnail) {
-                html += '<img src="' + post.thumbnail + '" style="width:100%; height:40px; object-fit:cover; border-radius:4px; margin-bottom:4px;">';
+                html += '<img src="' + post.thumbnail + '" style="width:40px; height:40px; object-fit:cover; border-radius:4px; flex-shrink:0;">';
+            } else {
+                html += '<div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:4px; flex-shrink:0;"></div>';
             }
-            html += '<div style="font-size:11px; font-weight:600; line-height:1.2;">' + (post.title || 'Untitled') + '</div>';
+            
+            // Info (right side)
+            html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">';
+            
+            // Title (max 2 lines)
+            html += '<div style="font-size:11px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">' + (post.title || 'Untitled') + '</div>';
+            
+            // Time
             if (post.time) {
-                html += '<div style="font-size:10px; opacity:0.8; margin-top:2px;">⏰ ' + post.time + '</div>';
+                html += '<div style="font-size:9px; opacity:0.9;">⏰ ' + post.time + '</div>';
             }
-            html += '</div>';
+            
+            // Platform badge
+            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:8px; font-weight:700; padding:2px 5px; border-radius:3px; width:fit-content;">' + platform.abbr + '</div>';
+            
+            html += '</div></div>';
             
             return { html: html };
         }

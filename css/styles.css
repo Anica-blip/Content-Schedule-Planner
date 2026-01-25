@@ -29,7 +29,7 @@ body {
 }
 
 .logo-section { display: flex; align-items: center; gap: 1rem; }
-.logo { width: 50px; height: 50px; }
+.logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
 .title { font-size: 1.5rem; font-weight: 700; color: var(--lighter-purple); }
 
 .btn {
@@ -120,3 +120,18 @@ body {
     .calendar-container { padding: 1rem; }
     .form-row { flex-direction: column; }
 }
+/* Dark dropdown */
+.form-select { background: #2d2d2d !important; }
+.form-select option { background: #2d2d2d; }
+
+/* Calendar header light purple */
+.fc-col-header-cell { background-color: #b19cd9 !important; }
+.fc-col-header-cell-cushion { color: #1a0b2e !important; font-weight: 600; }
+
+/* Smaller image preview */
+#imagePreview { max-width: 200px !important; max-height: 200px !important; }
+
+/* Compact events */
+.fc-event { height: 50px !important; border-radius: 6px !important; }
+.fc-daygrid-event { height: 50px !important; }
+.fc-timegrid-event { min-height: 50px !important; max-width: 150px !important; }
