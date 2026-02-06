@@ -18,14 +18,19 @@
     padding: 0 !important;
     margin: 0 !important;
     cursor: pointer;
-    font-size: 24px !important;
+    font-size: 0 !important;
     line-height: 1 !important;
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
+    background-image: url('../public/favicon.png') !important;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 6px;
 }
 
 #nav-toggle-btn:hover {

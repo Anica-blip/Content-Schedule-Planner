@@ -161,7 +161,7 @@ body {
     max-height: 50px !important;
     min-width: 50px !important;
     max-width: 50px !important;
-    margin: 2px !important;
+    margin: 0 !important;
 }
 
 /* Expand time slots to fit containers */
@@ -187,9 +187,10 @@ body {
     padding: 0 !important;
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: wrap !important;
-    gap: 3px !important;
+    flex-wrap: nowrap !important;
+    gap: 2px !important;
     align-items: flex-start !important;
+    justify-content: flex-start !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
