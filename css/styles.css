@@ -253,49 +253,20 @@ body {
     align-items: center;
 }
 
-/* Traffic light button in header */
+/* Traffic light button - just emoji, no container */
 .btn-traffic-light {
-    width: 45px;
-    height: 45px;
-    background: var(--lighter-purple) !important;
-    border: 2px solid var(--light-purple) !important;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-traffic-light.connecting {
-    background: var(--lighter-purple) !important;
-    border-color: var(--light-purple) !important;
-}
-
-.btn-traffic-light.connected {
-    background: var(--lighter-purple) !important;
-    border-color: var(--light-purple) !important;
-}
-
-.btn-traffic-light.error {
-    background: var(--lighter-purple) !important;
-    border-color: var(--light-purple) !important;
-}
-
-.btn-traffic-light svg {
-    fill: #1a0b2e !important;
-    display: block !important;
-    width: 20px !important;
-    height: 20px !important;
-    pointer-events: none !important;
-}
-
-.btn-traffic-light svg path {
-    fill: #1a0b2e !important;
+    font-size: 42px !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease;
 }
 
 .btn-traffic-light:hover {
-    transform: scale(1.05);
+    transform: scale(1.15);
 }
 
 /* Make New Post button square */

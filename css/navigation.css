@@ -72,8 +72,8 @@
 
 /* Icon Containers */
 .nav-icon {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     background: var(--lighter-purple);
     border: 2px solid var(--light-purple);
     border-radius: 10px;
@@ -84,7 +84,7 @@
     transition: all 0.3s ease;
     position: relative;
     text-decoration: none;
-    font-size: 28px !important;
+    font-size: 22px !important;
     line-height: 1 !important;
 }
 
