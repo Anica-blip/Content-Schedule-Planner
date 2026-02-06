@@ -277,6 +277,22 @@ body {
     transform: scale(1.15);
 }
 
+/* Speaker button - medium size, transparent container */
+.btn-speaker {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    font-size: 38px !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease;
+}
+
+.btn-speaker:hover {
+    transform: scale(1.15);
+}
+
 /* Make New Post button square */
 .btn-create {
     width: 110px;
