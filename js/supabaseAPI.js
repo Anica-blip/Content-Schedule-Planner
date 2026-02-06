@@ -13,19 +13,12 @@ class SupabaseAPI {
 
     async init() {
         try {
-            // Try config.js first, then localStorage
+            // Get credentials from config.js only
             this.supabaseUrl = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : null;
             this.supabaseKey = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : null;
-            
-            if (!this.supabaseUrl || this.supabaseUrl === '') {
-                this.supabaseUrl = localStorage.getItem('supabase_url');
-            }
-            if (!this.supabaseKey || this.supabaseKey === '') {
-                this.supabaseKey = localStorage.getItem('supabase_key');
-            }
 
             if (!this.supabaseUrl || !this.supabaseKey || this.supabaseUrl === '' || this.supabaseKey === '') {
-                console.warn('⚠️ Supabase credentials not configured. Please log in to configure.');
+                console.warn('⚠️ Supabase credentials not configured in config.js');
                 return false;
             }
 

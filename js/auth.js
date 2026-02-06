@@ -5,36 +5,21 @@
 
 let supabaseClient = null;
 
-// Initialize Supabase client
 function initSupabase() {
-    // Try to get credentials from config.js first
-    let url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
-    let key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
-    
-    // If not in config.js, try localStorage
-    if (!url || url === '') {
-        url = localStorage.getItem('supabase_url') || '';
-    }
-    if (!key || key === '') {
-        key = localStorage.getItem('supabase_key') || '';
-    }
-    
-    // Pre-fill settings form if credentials exist
-    if (url) document.getElementById('supabase-url').value = url;
-    if (key) document.getElementById('supabase-key').value = key;
+    const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
+    const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
     
     if (url && key && url !== '' && key !== '') {
         try {
             supabaseClient = supabase.createClient(url, key);
-            console.log('✅ Supabase client initialized');
+            console.log('✅ Supabase initialized');
             return true;
         } catch (error) {
-            console.error('❌ Failed to initialize Supabase:', error);
-            showError('Failed to initialize Supabase. Please check your credentials.');
+            showError('Check config.js credentials');
             return false;
         }
     } else {
-        showError('Please configure your Supabase credentials in Settings below.');
+        showError('Configure config.js');
         return false;
     }
 }
@@ -63,72 +48,24 @@ async function checkSession() {
     }
 }
 
-// Login function
-async function login(email, password) {
-    if (!supabaseClient) {
-        if (!initSupabase()) return;
-    }
+async function loginWithGitHub() {
+    if (!supabaseClient && !initSupabase()) return;
     
-    const loginBtn = document.getElementById('login-btn');
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Signing in...';
+    const btn = document.getElementById('github-login-btn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting...';
     
     try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'github',
+            options: { redirectTo: window.location.origin + '/index.html' }
         });
-        
         if (error) throw error;
-        
-        console.log('✅ Login successful');
-        showSuccess('Login successful! Redirecting...');
-        
-        // Store session info
-        localStorage.setItem('user_email', email);
-        
-        // Redirect to main app after short delay
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-        
     } catch (error) {
-        console.error('❌ Login failed:', error);
-        showError(error.message || 'Login failed. Please check your credentials.');
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
+        showError(error.message);
+        btn.disabled = false;
+        btn.textContent = 'Sign in with GitHub';
     }
-}
-
-// Save Supabase settings
-function saveSettings() {
-    const url = document.getElementById('supabase-url').value.trim();
-    const key = document.getElementById('supabase-key').value.trim();
-    
-    if (!url || !key) {
-        showError('Please enter both Supabase URL and Anon Key.');
-        return;
-    }
-    
-    // Validate URL format
-    try {
-        new URL(url);
-    } catch (e) {
-        showError('Invalid Supabase URL format. Should be like: https://xxxxx.supabase.co');
-        return;
-    }
-    
-    // Save to localStorage
-    localStorage.setItem('supabase_url', url);
-    localStorage.setItem('supabase_key', key);
-    
-    showSuccess('Settings saved! Please try logging in now.');
-    
-    // Reinitialize Supabase client
-    initSupabase();
-    
-    // Hide settings panel
-    document.getElementById('settings-panel').classList.remove('active');
 }
 
 // Show error message
@@ -167,21 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Supabase
     initSupabase();
     
-    // Login form submission
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        login(email, password);
-    });
-    
-    // Settings toggle
-    document.getElementById('settings-toggle').addEventListener('click', (e) => {
-        e.preventDefault();
-        const panel = document.getElementById('settings-panel');
-        panel.classList.toggle('active');
-    });
-    
-    // Save settings button
-    document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+    // GitHub login button
+    document.getElementById('github-login-btn').addEventListener('click', loginWithGitHub);
 });
