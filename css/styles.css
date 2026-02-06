@@ -161,10 +161,7 @@ body {
     max-height: 50px !important;
     min-width: 50px !important;
     max-width: 50px !important;
-    position: absolute !important;
     margin: 2px !important;
-    top: 0 !important;
-    left: 0 !important;
 }
 
 /* Expand time slots to fit containers */
@@ -188,28 +185,18 @@ body {
 .fc-timegrid-col-events {
     margin: 0 !important;
     padding: 0 !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-    position: relative !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
 .fc-timegrid-event-harness {
-    position: static !important;
     display: inline-block !important;
     vertical-align: top !important;
-    margin: 0 2px 2px 0 !important;
+    margin: 2px !important;
 }
 
-/* Force events to align at top of time slot */
+/* Let FullCalendar position events based on time */
 .fc-timegrid-event-harness-inset {
-    top: 0 !important;
-    left: 0 !important;
-    right: auto !important;
-    bottom: auto !important;
-    position: absolute !important;
+    left: 2px !important;
 }
 
 /* Light background already in event content */
