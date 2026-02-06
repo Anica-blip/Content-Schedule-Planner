@@ -202,10 +202,11 @@ body {
 }
 
 /* Day view specific - force left alignment in rows */
-.fc-timeGridDay-view .fc-timegrid-col-events,
-.fc-timegrid-axis + .fc-timegrid-col .fc-timegrid-col-events {
+.fc-view-harness-active > .fc-view-harness > .fc-timeGridDay-view .fc-timegrid-col-events,
+.fc-timeGridDay-view .fc-timegrid-col-events {
     justify-content: flex-start !important;
     align-items: flex-start !important;
+    text-align: left !important;
 }
 
 /* Force event harness to left align in day view */

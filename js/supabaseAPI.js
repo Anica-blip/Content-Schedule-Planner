@@ -16,8 +16,8 @@ class SupabaseAPI {
             this.supabaseUrl = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : null;
             this.supabaseKey = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : null;
 
-            if (!this.supabaseUrl || !this.supabaseKey) {
-                console.error('Supabase credentials not found');
+            if (!this.supabaseUrl || !this.supabaseKey || this.supabaseUrl === '' || this.supabaseKey === '') {
+                console.warn('⚠️ Supabase credentials not configured. Add your credentials in index.html to enable database features.');
                 return false;
             }
 

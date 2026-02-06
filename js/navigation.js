@@ -6,14 +6,16 @@ function initNavigation() {
     const panel = document.getElementById('nav-panel');
     if (panel) {
         console.log('✅ Navigation panel found in HTML');
-        const toggle = panel.querySelector('.nav-toggle');
-        if (toggle) {
-            console.log('✅ Toggle button found');
-        } else {
-            console.error('❌ Toggle button not found');
-        }
     } else {
         console.error('❌ Navigation panel not found in HTML');
+    }
+    
+    // Verify toggle button exists (now in separate container)
+    const toggle = document.getElementById('nav-toggle-btn');
+    if (toggle) {
+        console.log('✅ Toggle button found');
+    } else {
+        console.error('❌ Toggle button not found');
     }
 }
 
