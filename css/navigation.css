@@ -2,16 +2,19 @@
 #nav-panel {
     position: fixed;
     left: -110px;
-    top: 180px;
+    top: 150px;
     width: 110px;
     max-height: calc(100vh - 200px);
     background: rgba(42, 27, 78, 0.15);
     backdrop-filter: blur(10px);
     transition: left 0.3s ease;
-    z-index: 999;
+    z-index: 9999;
     padding: 10px;
     border-radius: 0 12px 12px 0;
     overflow-y: auto;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 #nav-panel::-webkit-scrollbar {
@@ -42,6 +45,11 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
+    z-index: 10000;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .nav-toggle:hover {
@@ -49,10 +57,9 @@
     transform: translateX(3px);
 }
 
-.nav-toggle svg {
-    fill: #1a0b2e;
-    width: 32px;
-    height: 32px;
+.nav-toggle {
+    font-size: 28px !important;
+    line-height: 1 !important;
 }
 
 /* Navigation Content */
@@ -76,18 +83,14 @@
     transition: all 0.3s ease;
     position: relative;
     text-decoration: none;
+    font-size: 28px !important;
+    line-height: 1 !important;
 }
 
 .nav-icon:hover {
     background: var(--light-purple);
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
-}
-
-.nav-icon svg {
-    fill: #1a0b2e;
-    width: 32px;
-    height: 32px;
 }
 
 /* Tooltip */

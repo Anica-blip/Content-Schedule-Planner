@@ -43,6 +43,8 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
+        slotMinTime: '06:00:00',
+        slotMaxTime: '21:00:00',
         editable: true,
         selectable: true,
         height: 'auto',
@@ -63,32 +65,43 @@ function initCalendar() {
         eventContent: function(arg) {
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
+            const view = calendar.view.type;
             
-            console.log('Rendering event:', post.title, 'Thumbnail:', post.thumbnail);
+            console.log('Rendering event:', post.title, 'View:', view, 'Thumbnail:', post.thumbnail);
             
-            // Compact container layout: thumbnail left, info right
-            let html = '<div style="display:flex; gap:6px; padding:4px; align-items:flex-start; height:100%; overflow:hidden; background:rgba(255,255,255,0.95); border-radius:6px;">';
+            // Different layouts for month vs week/day
+            const isMonthView = view === 'dayGridMonth';
+            const imgSize = isMonthView ? '40px' : '25px';
+            const fontSize = isMonthView ? '8.5px' : '7px';
+            const timeFontSize = isMonthView ? '8px' : '6.5px';
+            const badgeFontSize = isMonthView ? '7px' : '6px';
+            const containerPadding = isMonthView ? '5px' : '2px';
+            const gap = isMonthView ? '5px' : '2px';
+            
+            // Fixed-size container with flex layout
+            let html = '<div style="display:flex; gap:' + gap + '; padding:' + containerPadding + '; align-items:flex-start; width:100%; height:100%; overflow:hidden; background:rgba(255,255,255,0.95); border-radius:6px; box-sizing:border-box;">';
             
             // Thumbnail (left side)
             if (post.thumbnail) {
-                html += '<img src="' + post.thumbnail + '" alt="Post thumbnail" style="width:40px; height:40px; object-fit:cover; border-radius:4px; flex-shrink:0; display:block !important;" onerror="console.error(\'Image failed to load:\', this.src)">';
+                html += '<img src="' + post.thumbnail + '" alt="Post thumbnail" style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; max-width:' + imgSize + '; max-height:' + imgSize + '; object-fit:cover; border-radius:4px; flex-shrink:0; display:block !important; border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">';
+                html += '<div style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:none; align-items:center; justify-content:center; font-size:' + (isMonthView ? '18px' : '14px') + ';">📷</div>';
             } else {
-                html += '<div style="width:40px; height:40px; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px;">📷</div>';
+                html += '<div style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:' + (isMonthView ? '18px' : '14px') + ';">📷</div>';
             }
             
-            // Info (right side) - dark text on light background
-            html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">';
+            // Info (right side) - flexible width with wrapping
+            html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; overflow:hidden;">';
             
-            // Title (max 2 lines) - dark text
-            html += '<div style="font-size:9px; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#1a0b2e;">' + (post.title || 'Untitled') + '</div>';
+            // Title (wraps to multiple lines) - dark text, word-wrap enabled
+            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.3; overflow:hidden; word-wrap:break-word; overflow-wrap:break-word; color:#1a0b2e; max-height:' + (isMonthView ? '26px' : '20px') + ';">' + (post.title || 'Untitled') + '</div>';
             
-            // Time (no icon) - dark text
+            // Time (if exists) - dark text
             if (post.time) {
-                html += '<div style="font-size:9px; color:#1a0b2e; opacity:0.7;">' + post.time + '</div>';
+                html += '<div style="font-size:' + timeFontSize + '; color:#1a0b2e; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + post.time + '</div>';
             }
             
-            // Platform badge
-            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:8px; font-weight:700; padding:2px 5px; border-radius:3px; width:fit-content; margin-top:auto;">' + platform.abbr + '</div>';
+            // Platform badge - positioned at bottom
+            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:' + badgeFontSize + '; font-weight:700; padding:2px 4px; border-radius:3px; width:fit-content; margin-top:auto; line-height:1;">' + platform.abbr + '</div>';
             
             html += '</div></div>';
             
