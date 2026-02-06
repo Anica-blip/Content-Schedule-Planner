@@ -1,7 +1,7 @@
 /* Navigation Panel */
 #nav-panel {
     position: fixed;
-    left: -60px;
+    left: -40px;
     top: 120px;
     width: 110px;
     max-height: calc(100vh - 150px);
@@ -28,7 +28,7 @@
 }
 
 #nav-panel.open {
-    left: 0;
+    left: 0 !important;
 }
 
 /* Toggle Button - Always visible */

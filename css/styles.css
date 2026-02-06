@@ -185,18 +185,17 @@ body {
 .fc-timegrid-col-events {
     margin: 0 !important;
     padding: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
 .fc-timegrid-event-harness {
     display: inline-block !important;
     vertical-align: top !important;
-    margin: 2px !important;
-}
-
-/* Let FullCalendar position events based on time */
-.fc-timegrid-event-harness-inset {
-    left: 2px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 /* Light background already in event content */
