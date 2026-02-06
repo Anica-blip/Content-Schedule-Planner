@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Links Manager - 3C Content Planner</title>
     <link rel="icon" type="image/png" href="public/favicon.png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -231,9 +230,13 @@
 <body>
     <div id="auth-screen" class="auth-container">
         <h2>🔐 Links Manager Access</h2>
-        <p>This page is protected. Please authenticate to continue.</p>
-        <button id="auth-btn" class="auth-btn">Sign in with GitHub</button>
+        <p>Enter your password to manage navigation links</p>
+        <input type="password" id="password-input" class="url-input" placeholder="Enter password..." style="margin-bottom: 20px;">
+        <button id="auth-btn" class="auth-btn">Unlock</button>
         <div id="auth-message" class="message"></div>
+        <p style="color: rgba(177, 156, 217, 0.5); font-size: 12px; margin-top: 20px;">
+            Default password: <code style="background: rgba(155, 89, 182, 0.2); padding: 2px 8px; border-radius: 4px;">chef2024</code>
+        </p>
     </div>
     
     <div id="manager-screen" class="container" style="display: none;">

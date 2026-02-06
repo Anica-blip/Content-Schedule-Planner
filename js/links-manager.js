@@ -2,53 +2,43 @@
  * Links Manager - Secure page for managing navigation URLs
  */
 
-let supabaseClient = null;
 let isAuthenticated = false;
 
-function initSupabase() {
-    const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
-    const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
-    
-    if (url && key) {
-        supabaseClient = supabase.createClient(url, key);
+// Simple password check (change this password!)
+const MANAGER_PASSWORD = 'chef2024';
+
+function checkAuth() {
+    // Check if already authenticated in this session
+    const authSession = sessionStorage.getItem('linksManagerAuth');
+    if (authSession === 'authenticated') {
+        isAuthenticated = true;
+        showManager();
+        loadLinks();
         return true;
     }
     return false;
 }
 
-async function checkAuth() {
-    if (!initSupabase()) return false;
+function authenticateWithPassword() {
+    const input = document.getElementById('password-input');
+    const password = input.value.trim();
     
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            isAuthenticated = true;
-            showManager();
-            loadLinks();
-            return true;
-        }
-    } catch (error) {
-        console.error('Auth failed:', error);
+    if (!password) {
+        showAuthMessage('Please enter password', 'error');
+        return;
     }
-    return false;
-}
-
-async function loginWithGitHub() {
-    if (!initSupabase()) return;
     
-    const btn = document.getElementById('auth-btn');
-    btn.disabled = true;
-    btn.textContent = 'Redirecting...';
-    
-    try {
-        await supabaseClient.auth.signInWithOAuth({
-            provider: 'github',
-            options: { redirectTo: window.location.href }
-        });
-    } catch (error) {
-        showAuthMessage(error.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'Sign in with GitHub';
+    if (password === MANAGER_PASSWORD) {
+        // Store auth in session (cleared when browser closes)
+        sessionStorage.setItem('linksManagerAuth', 'authenticated');
+        isAuthenticated = true;
+        showManager();
+        loadLinks();
+        showAuthMessage('Access granted!', 'success');
+    } else {
+        showAuthMessage('Incorrect password', 'error');
+        input.value = '';
+        input.focus();
     }
 }
 
@@ -123,5 +113,16 @@ function deleteLink(key) {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    document.getElementById('auth-btn').addEventListener('click', loginWithGitHub);
+    
+    const authBtn = document.getElementById('auth-btn');
+    const passwordInput = document.getElementById('password-input');
+    
+    authBtn.addEventListener('click', authenticateWithPassword);
+    
+    // Allow Enter key to submit password
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            authenticateWithPassword();
+        }
+    });
 });
