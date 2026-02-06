@@ -39,3 +39,6 @@ Thumbs.db
 # Testing
 coverage/
 .eslintcache
+
+# Configuration with sensitive credentials
+config.js

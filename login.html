@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - 3C Content Schedule Planner</title>
+    <link rel="icon" type="image/png" href="public/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%);
+        }
+        
+        .login-box {
+            background: rgba(45, 27, 78, 0.9);
+            border-radius: 16px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .login-title {
+            color: #b19cd9;
+            font-size: 28px;
+            margin: 0 0 10px 0;
+        }
+        
+        .login-subtitle {
+            color: #9b59b6;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            color: #b19cd9;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+            background: rgba(26, 11, 46, 0.8);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(177, 156, 217, 0.5);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
+        }
+        
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .settings-toggle {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .settings-link {
+            color: #9b59b6;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .settings-link:hover {
+            color: #b19cd9;
+        }
+        
+        .settings-panel {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .settings-panel.active {
+            display: block;
+        }
+        
+        .error-message {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #e74c3c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .success-message {
+            background: rgba(39, 174, 96, 0.2);
+            border: 1px solid rgba(39, 174, 96, 0.5);
+            color: #27ae60;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="public/logo.png" alt="3C Logo" class="login-logo">
+                <h1 class="login-title">3C Content Planner</h1>
+                <p class="login-subtitle">Schedule your social media posts</p>
+            </div>
+            
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="your@email.com"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" id="login-btn" class="btn-login">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="settings-toggle">
+                <a href="#" class="settings-link" id="settings-toggle">⚙️ Supabase Settings</a>
+            </div>
+            
+            <div id="settings-panel" class="settings-panel">
+                <div class="form-group">
+                    <label class="form-label" for="supabase-url">Supabase URL</label>
+                    <input 
+                        type="url" 
+                        id="supabase-url" 
+                        class="form-input" 
+                        placeholder="https://xxxxx.supabase.co"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="supabase-key">Supabase Anon Key</label>
+                    <input 
+                        type="text" 
+                        id="supabase-key" 
+                        class="form-input" 
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    >
+                </div>
+                
+                <button type="button" id="save-settings-btn" class="btn-login">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
