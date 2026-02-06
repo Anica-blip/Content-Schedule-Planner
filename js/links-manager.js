@@ -1,44 +1,46 @@
-/**
- * Links Manager - Secure page for managing navigation URLs
- */
-
+let supabaseClient = null;
 let isAuthenticated = false;
 
-// Simple password check (change this password!)
-const MANAGER_PASSWORD = 'chef2024';
-
-function checkAuth() {
-    // Check if already authenticated in this session
-    const authSession = sessionStorage.getItem('linksManagerAuth');
-    if (authSession === 'authenticated') {
-        isAuthenticated = true;
-        showManager();
-        loadLinks();
+function initSupabase() {
+    const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
+    const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
+    if (url && key) {
+        supabaseClient = supabase.createClient(url, key);
         return true;
     }
     return false;
 }
 
-function authenticateWithPassword() {
-    const input = document.getElementById('password-input');
-    const password = input.value.trim();
-    
-    if (!password) {
-        showAuthMessage('Please enter password', 'error');
-        return;
+async function checkAuth() {
+    if (!initSupabase()) return false;
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            isAuthenticated = true;
+            showManager();
+            loadLinks();
+            return true;
+        }
+    } catch (error) {
+        console.error('Auth failed:', error);
     }
-    
-    if (password === MANAGER_PASSWORD) {
-        // Store auth in session (cleared when browser closes)
-        sessionStorage.setItem('linksManagerAuth', 'authenticated');
-        isAuthenticated = true;
-        showManager();
-        loadLinks();
-        showAuthMessage('Access granted!', 'success');
-    } else {
-        showAuthMessage('Incorrect password', 'error');
-        input.value = '';
-        input.focus();
+    return false;
+}
+
+async function loginWithGitHub() {
+    if (!initSupabase()) return;
+    const btn = document.getElementById('auth-btn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting...';
+    try {
+        await supabaseClient.auth.signInWithOAuth({
+            provider: 'github',
+            options: { redirectTo: window.location.href }
+        });
+    } catch (error) {
+        showAuthMessage(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Sign in with GitHub';
     }
 }
 
@@ -71,58 +73,33 @@ function loadLinks() {
 
 function saveLink(key) {
     if (!isAuthenticated) return showMessage('Auth required', 'error');
-    
     const input = document.querySelector(`input[data-key="${key}"]`);
     const url = input.value.trim();
-    
     if (!url) return showMessage('Enter URL', 'error');
-    
-    try {
-        new URL(url);
-    } catch (e) {
-        return showMessage('Invalid URL', 'error');
-    }
-    
+    try { new URL(url); } catch (e) { return showMessage('Invalid URL', 'error'); }
     const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
     links[key] = url;
     localStorage.setItem('navLinks', JSON.stringify(links));
-    
     showMessage(`✓ ${key} saved!`, 'success');
 }
 
 function editLink(key) {
     if (!isAuthenticated) return showMessage('Auth required', 'error');
-    const input = document.querySelector(`input[data-key="${key}"]`);
-    input.focus();
+    document.querySelector(`input[data-key="${key}"]`).focus();
     showMessage(`Editing ${key}...`, 'success');
 }
 
 function deleteLink(key) {
     if (!isAuthenticated) return showMessage('Auth required', 'error');
     if (!confirm(`Delete ${key}?`)) return;
-    
-    const input = document.querySelector(`input[data-key="${key}"]`);
-    input.value = '';
-    
+    document.querySelector(`input[data-key="${key}"]`).value = '';
     const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
     delete links[key];
     localStorage.setItem('navLinks', JSON.stringify(links));
-    
     showMessage(`✓ ${key} deleted!`, 'success');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    
-    const authBtn = document.getElementById('auth-btn');
-    const passwordInput = document.getElementById('password-input');
-    
-    authBtn.addEventListener('click', authenticateWithPassword);
-    
-    // Allow Enter key to submit password
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            authenticateWithPassword();
-        }
-    });
+    document.getElementById('auth-btn').addEventListener('click', loginWithGitHub);
 });
