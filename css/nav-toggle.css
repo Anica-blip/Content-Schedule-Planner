@@ -1,15 +1,33 @@
-/* Navigation Toggle Button in Header */
-.btn-nav-toggle {
+/* Navigation Toggle Container - positioned near calendar header */
+#nav-toggle-container {
+    position: fixed;
+    left: 10px;
+    top: 110px;
+    z-index: 10000;
+    background: var(--lighter-purple);
+    border: 2px solid var(--light-purple);
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Toggle Button */
+#nav-toggle-btn {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    margin: 0 10px 0 0 !important;
+    margin: 0 !important;
     cursor: pointer;
-    font-size: 32px !important;
+    font-size: 28px !important;
     line-height: 1 !important;
     transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
 }
 
-.btn-nav-toggle:hover {
+#nav-toggle-btn:hover {
     transform: scale(1.15) rotate(15deg);
 }
