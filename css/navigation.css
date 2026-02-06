@@ -1,10 +1,10 @@
-/* Navigation Panel - slides from left */
+/* Navigation Panel - slides from left, positioned below diamond */
 #nav-panel {
     position: fixed;
     left: -80px;
-    top: 100px;
+    top: 155px;
     width: 80px;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 175px);
     background: transparent;
     transition: left 0.3s ease;
     z-index: 9999;
