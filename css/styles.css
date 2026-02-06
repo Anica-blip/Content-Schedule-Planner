@@ -195,9 +195,29 @@ body {
 
 /* Allow multiple events at same time to appear side by side */
 .fc-timegrid-event-harness {
-    display: block !important;
+    display: inline-block !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
+    vertical-align: top !important;
+}
+
+/* Day view specific - force left alignment in rows */
+.fc-timeGridDay-view .fc-timegrid-col-events,
+.fc-timegrid-axis + .fc-timegrid-col .fc-timegrid-col-events {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+}
+
+/* Force event harness to left align in day view */
+.fc-timeGridDay-view .fc-timegrid-event-harness {
+    margin-left: 0 !important;
+    margin-right: 2px !important;
+}
+
+/* Prevent centering in day view rows */
+.fc-timeGridDay-view .fc-timegrid-col-frame {
+    display: flex !important;
+    justify-content: flex-start !important;
 }
 
 /* Light background already in event content */
