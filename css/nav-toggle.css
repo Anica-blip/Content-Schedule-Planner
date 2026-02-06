@@ -4,11 +4,11 @@
     left: 10px;
     top: 110px;
     z-index: 10000;
-    background: var(--lighter-purple);
-    border: 2px solid var(--light-purple);
+    background: transparent;
+    border: none;
     border-radius: 8px;
-    padding: 5px;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    padding: 3px;
+    box-shadow: none;
 }
 
 /* Navigation Toggle Button */
@@ -18,14 +18,14 @@
     padding: 0 !important;
     margin: 0 !important;
     cursor: pointer;
-    font-size: 28px !important;
+    font-size: 24px !important;
     line-height: 1 !important;
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 
 #nav-toggle-btn:hover {

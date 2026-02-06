@@ -42,7 +42,8 @@
     width: 60px;
     height: 60px;
     background: transparent;
-    border: none;
+    border: none !important;
+    outline: none !important;
     border-radius: 8px;
     display: flex;
     align-items: center;
