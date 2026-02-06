@@ -186,16 +186,17 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     display: flex !important;
+    flex-direction: row !important;
     flex-wrap: wrap !important;
-    gap: 2px !important;
+    gap: 3px !important;
+    align-items: flex-start !important;
 }
 
 /* Allow multiple events at same time to appear side by side */
 .fc-timegrid-event-harness {
-    display: inline-block !important;
-    vertical-align: top !important;
+    display: block !important;
+    flex: 0 0 auto !important;
     margin: 0 !important;
-    flex-shrink: 0 !important;
 }
 
 /* Light background already in event content */

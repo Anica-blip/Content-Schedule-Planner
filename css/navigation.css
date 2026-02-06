@@ -1,21 +1,18 @@
-/* Navigation Panel */
+/* Navigation Panel - slides from left */
 #nav-panel {
     position: fixed;
-    left: -40px;
-    top: 120px;
-    width: 110px;
-    max-height: calc(100vh - 150px);
-    background: rgba(42, 27, 78, 0.95);
-    backdrop-filter: blur(10px);
+    left: -80px;
+    top: 100px;
+    width: 80px;
+    max-height: calc(100vh - 120px);
+    background: transparent;
     transition: left 0.3s ease;
     z-index: 9999;
-    padding: 10px;
-    border-radius: 0 12px 12px 0;
+    padding: 0;
     overflow-y: auto;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.4);
 }
 
 #nav-panel::-webkit-scrollbar {
@@ -28,70 +25,40 @@
 }
 
 #nav-panel.open {
-    left: 0 !important;
+    left: 10px !important;
 }
 
-/* Toggle Button - Always visible */
-.nav-toggle {
-    position: absolute;
-    right: -55px;
-    top: 0;
-    width: 55px;
-    height: 55px;
-    background: var(--lighter-purple);
-    border: 2px solid var(--light-purple);
-    border-radius: 0 8px 8px 0;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 10000;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-.nav-toggle:hover {
-    background: var(--light-purple);
-    transform: translateX(3px);
-}
-
-.nav-toggle {
-    font-size: 28px !important;
-    line-height: 1 !important;
-}
 
 /* Navigation Content */
 .nav-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
+    align-items: center;
 }
 
-/* Icon Containers */
+/* Icon Containers - transparent background */
 .nav-icon {
-    width: 55px;
-    height: 55px;
-    background: var(--lighter-purple);
-    border: 2px solid var(--light-purple);
-    border-radius: 10px;
+    width: 60px;
+    height: 60px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
     text-decoration: none;
-    font-size: 22px !important;
+    font-size: 32px !important;
     line-height: 1 !important;
+    margin-bottom: 8px;
 }
 
 .nav-icon:hover {
-    background: var(--light-purple);
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
+    transform: scale(1.15);
+    filter: brightness(1.2);
 }
 
 /* Tooltip */

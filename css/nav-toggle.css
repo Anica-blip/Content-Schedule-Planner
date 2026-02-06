@@ -1,0 +1,15 @@
+/* Navigation Toggle Button in Header */
+.btn-nav-toggle {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 10px 0 0 !important;
+    cursor: pointer;
+    font-size: 32px !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease;
+}
+
+.btn-nav-toggle:hover {
+    transform: scale(1.15) rotate(15deg);
+}
