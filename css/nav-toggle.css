@@ -13,7 +13,7 @@
 
 /* Navigation Toggle Button */
 #nav-toggle-btn {
-    background: transparent !important;
+    background-color: transparent !important;
     border: none !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -21,16 +21,15 @@
     font-size: 0 !important;
     line-height: 1 !important;
     transition: transform 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background-image: url('../public/favicon.png') !important;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    border-radius: 6px;
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+    background-image: url('../public/none.webp') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    border-radius: 6px !important;
+    position: relative !important;
 }
 
 #nav-toggle-btn:hover {
