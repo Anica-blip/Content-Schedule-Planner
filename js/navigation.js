@@ -17,6 +17,9 @@ function initNavigation() {
     } else {
         console.error('❌ Toggle button not found');
     }
+    
+    // Load and attach URLs to nav icons
+    loadNavLinks();
 }
 
 function updateSupabaseIndicator() {
@@ -32,6 +35,49 @@ function toggleNavPanel() {
         panel.classList.toggle('open');
         console.log('Panel toggled, open:', panel.classList.contains('open'));
     }
+}
+
+// Load navigation links from localStorage
+function loadNavLinks() {
+    const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
+    
+    // Map of emoji keys to their corresponding nav icons
+    const navMapping = {
+        'memos': 0,
+        'voice': 1,
+        'chatroom': 2,
+        'ai': 3,
+        'supabase': 4,
+        'cloudflare': 5,
+        'password': 6,
+        'mobile': 7,
+        'dashboard': 8
+    };
+    
+    // Get all nav icons
+    const navIcons = document.querySelectorAll('.nav-icon');
+    
+    // Attach URLs to nav icons
+    Object.keys(navMapping).forEach(key => {
+        if (links[key]) {
+            const index = navMapping[key];
+            const icon = navIcons[index];
+            
+            if (icon) {
+                // Store the URL in a data attribute
+                icon.dataset.url = links[key];
+                
+                // Update click handler to open URL
+                icon.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = icon.dataset.url;
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                });
+            }
+        }
+    });
 }
 
 window.addEventListener('load', initNavigation);
