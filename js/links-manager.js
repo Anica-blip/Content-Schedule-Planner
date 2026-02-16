@@ -33,9 +33,12 @@ async function loginWithGitHub() {
     btn.disabled = true;
     btn.textContent = 'Redirecting...';
     try {
+        // Use current URL to handle both GitHub Pages and custom domains
+        const redirectUrl = window.location.href;
+        
         await supabaseClient.auth.signInWithOAuth({
             provider: 'github',
-            options: { redirectTo: window.location.href }
+            options: { redirectTo: redirectUrl }
         });
     } catch (error) {
         showAuthMessage(error.message, 'error');
