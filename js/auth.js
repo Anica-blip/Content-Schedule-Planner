@@ -56,15 +56,19 @@ async function loginWithGitHub() {
     btn.textContent = 'Redirecting...';
     
     try {
+        // Use current URL path to handle both GitHub Pages and custom domains
+        const currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const redirectUrl = window.location.origin + currentPath + '/index.html';
+        
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'github',
-            options: { redirectTo: window.location.origin + '/index.html' }
+            options: { redirectTo: redirectUrl }
         });
         if (error) throw error;
     } catch (error) {
         showError(error.message);
         btn.disabled = false;
-        btn.textContent = 'Sign in with GitHub';
+        btn.textContent = 'GitHub Access Connection';
     }
 }
 
