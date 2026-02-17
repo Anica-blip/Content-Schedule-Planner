@@ -148,9 +148,16 @@ async function loadPosts() {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
         
         // Create datetime for proper sorting
-        let startDateTime = post.scheduled_date;
+        // Extract just the date part (YYYY-MM-DD) from scheduled_date
+        let dateOnly = post.scheduled_date;
+        if (dateOnly.includes('T')) {
+            dateOnly = dateOnly.split('T')[0];
+        }
+        
+        // Build proper ISO datetime
+        let startDateTime = dateOnly;
         if (post.scheduled_time) {
-            startDateTime = post.scheduled_date + 'T' + post.scheduled_time;
+            startDateTime = dateOnly + 'T' + post.scheduled_time;
         }
         
         console.log('➕ Adding event:', {
