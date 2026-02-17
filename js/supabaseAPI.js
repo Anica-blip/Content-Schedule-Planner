@@ -48,28 +48,47 @@ class SupabaseAPI {
 
     async getPosts(startDate, endDate) {
         if (!this.initialized) await this.init();
+        
+        // Get current user for RLS filtering
+        const user = await this.getCurrentUser();
+        if (!user) {
+            console.warn('⚠️ No authenticated user, cannot fetch posts');
+            return [];
+        }
+        
         const { data, error } = await this.client
             .from('posts')
             .select('*')
+            .eq('user_id', user.id)
             .gte('scheduled_date', startDate)
             .lte('scheduled_date', endDate)
             .order('scheduled_date', { ascending: true });
         if (error) {
-            console.error('Error fetching posts:', error);
+            console.error('❌ Error fetching posts:', error);
             return [];
         }
-        return data;
+        console.log('✅ Fetched posts for user:', user.id, '- Count:', data?.length || 0);
+        return data || [];
     }
 
     async getPost(postId) {
         if (!this.initialized) await this.init();
+        
+        // Get current user for RLS filtering
+        const user = await this.getCurrentUser();
+        if (!user) {
+            console.warn('⚠️ No authenticated user, cannot fetch post');
+            return null;
+        }
+        
         const { data, error } = await this.client
             .from('posts')
             .select('*')
             .eq('id', postId)
+            .eq('user_id', user.id)
             .single();
         if (error) {
-            console.error('Error fetching post:', error);
+            console.error('❌ Error fetching post:', error);
             return null;
         }
         return data;
