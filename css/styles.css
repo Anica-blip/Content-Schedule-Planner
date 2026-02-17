@@ -30,7 +30,7 @@ body {
 
 .logo-section { display: flex; align-items: center; gap: 1rem; }
 .logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
-.title { font-size: 1.5rem; font-weight: 700; color: var(--lighter-purple); }
+.title { font-size: 2rem; font-weight: 700; color: var(--lighter-purple); }
 
 .btn {
     padding: 0.75rem 1.5rem;

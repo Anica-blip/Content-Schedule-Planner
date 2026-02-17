@@ -112,24 +112,37 @@ function initCalendar() {
 }
 
 async function loadPosts() {
+    console.log('📅 Loading posts...');
     let posts = [];
     
     // Try Supabase first
     if (supabaseAPI.initialized) {
+        console.log('✅ Supabase initialized, fetching from database');
         const currentDate = calendar.getDate();
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        console.log('📆 Date range:', startOfMonth.toISOString().split('T')[0], 'to', endOfMonth.toISOString().split('T')[0]);
         
         posts = await supabaseAPI.getPosts(
             startOfMonth.toISOString().split('T')[0],
             endOfMonth.toISOString().split('T')[0]
         );
+        console.log('📊 Fetched', posts.length, 'posts from Supabase:', posts);
     } else {
+        console.log('⚠️ Supabase not initialized, using localStorage');
         // Fallback to localStorage
         posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+        console.log('📊 Loaded', posts.length, 'posts from localStorage:', posts);
     }
     
     calendar.removeAllEvents();
+    console.log('🗑️ Cleared all existing events');
+    
+    if (posts.length === 0) {
+        console.warn('⚠️ No posts to display');
+        return;
+    }
     
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
@@ -140,7 +153,13 @@ async function loadPosts() {
             startDateTime = post.scheduled_date + 'T' + post.scheduled_time;
         }
         
-        console.log('Adding event:', post.title, 'Image URL:', post.image_url);
+        console.log('➕ Adding event:', {
+            id: post.id,
+            title: post.title,
+            date: startDateTime,
+            platform: post.platform,
+            image: post.image_url
+        });
         
         calendar.addEvent({
             id: post.id,
@@ -157,6 +176,8 @@ async function loadPosts() {
             }
         });
     });
+    
+    console.log('✅ Finished loading', posts.length, 'posts to calendar');
 }
 
 function openCreatePostModal(date = null) {
