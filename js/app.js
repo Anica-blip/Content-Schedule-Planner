@@ -51,6 +51,9 @@ function initCalendar() {
         eventMaxStack: 3,
         dayMaxEventRows: false,
         eventOrder: 'start',
+        slotEventOverlap: false,
+        eventOverlap: true,
+        displayEventTime: true,
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
@@ -165,7 +168,8 @@ async function loadPosts() {
             title: post.title,
             date: startDateTime,
             platform: post.platform,
-            image: post.image_url
+            image_url: post.image_url,
+            has_image: !!post.image_url
         });
         
         calendar.addEvent({
