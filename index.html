@@ -25,6 +25,9 @@
             <h1 class="title">3C Content Schedule Planner</h1>
         </div>
         <div class="header-buttons">
+            <button id="jan-assistant-btn" class="btn btn-jan-profile" onclick="toggleJanChat()" title="Chat with Jan - AI Assistant">
+                <img src="public/jan-profile.png" alt="Jan AI Assistant" class="jan-profile-img">
+            </button>
             <button id="supabase-indicator" class="btn btn-traffic-light" title="Supabase Connection">
                 🚦
             </button>
@@ -170,8 +173,48 @@
         </div>
     </div>
 
+    <!-- Jan AI Assistant Chat Overlay -->
+    <div id="janChatOverlay" class="jan-chat-overlay">
+        <div class="jan-chat-container">
+            <div class="jan-chat-header">
+                <div class="jan-header-left">
+                    <img src="public/jan-profile.png" alt="Jan" class="jan-header-avatar">
+                    <div>
+                        <h3>Jan - AI Assistant</h3>
+                        <p class="jan-status"><span class="status-dot"></span>Online</p>
+                    </div>
+                </div>
+                <button class="jan-close-btn" onclick="toggleJanChat()">&times;</button>
+            </div>
+            
+            <div class="jan-chat-body" id="janChatBody">
+                <div class="jan-message jan-ai">
+                    <div class="jan-message-content">
+                        <strong>Jan:</strong> Hello! I'm Jan, your AI content assistant. I'm here to help you create engaging content, schedule posts, and manage your content strategy. How can I assist you today?
+                    </div>
+                </div>
+            </div>
+            
+            <div class="jan-chat-footer">
+                <div class="jan-quick-actions">
+                    <button class="jan-quick-btn" onclick="janQuickAction('help')">📝 Content Ideas</button>
+                    <button class="jan-quick-btn" onclick="janQuickAction('schedule')">📅 Schedule Help</button>
+                    <button class="jan-quick-btn" onclick="janQuickAction('review')">✨ Review Content</button>
+                    <button class="jan-quick-btn" onclick="janQuickAction('tips')">💡 Tips</button>
+                </div>
+                <div class="jan-input-group">
+                    <input type="text" id="janChatInput" class="jan-chat-input" placeholder="Ask Jan anything..." onkeypress="handleJanEnter(event)">
+                    <button class="jan-send-btn" onclick="sendJanMessage()">
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/supabaseAPI.js?v=1.1.2"></script>
     <script src="js/app.js?v=1.1.2"></script>
     <script src="js/navigation.js?v=1.0.3"></script>
+    <script src="js/jan-chat.js"></script>
 </body>
 </html>
