@@ -305,24 +305,35 @@ body {
 .fc-button { background: var(--light-purple) !important; border: none !important; }
 .fc-day-today { background: rgba(155, 89, 182, 0.15) !important; }
 
-/* Force left-alignment for events in time grid views (day/week) */
-.fc-timegrid-event-harness {
-    left: 0 !important;
-    right: auto !important;
-}
-
+/* Force side-by-side layout for events at same time */
 .fc-timegrid-col-events {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-    gap: 4px !important;
+    position: relative !important;
 }
 
-.fc-timegrid-event {
-    position: relative !important;
-    margin-left: 0 !important;
-    flex-shrink: 0 !important;
+.fc-timegrid-event-harness {
+    position: absolute !important;
+}
+
+.fc-timegrid-event-harness:nth-child(1) {
+    left: 0% !important;
+    width: 48% !important;
+}
+
+.fc-timegrid-event-harness:nth-child(2) {
+    left: 52% !important;
+    width: 48% !important;
+}
+
+.fc-timegrid-event-harness:nth-child(3) {
+    left: 0% !important;
+    top: 55px !important;
+    width: 48% !important;
+}
+
+.fc-timegrid-event-harness:nth-child(4) {
+    left: 52% !important;
+    top: 55px !important;
+    width: 48% !important;
 }
 
 .modal {

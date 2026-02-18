@@ -44,7 +44,7 @@ function initCalendar() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         slotMinTime: '07:00:00',
-        slotMaxTime: '21:00:00',
+        slotMaxTime: '22:00:00',
         editable: true,
         selectable: true,
         height: 'auto',
