@@ -188,22 +188,80 @@
             </div>
             
             <div class="jan-chat-body" id="janChatBody">
-                <div class="jan-message jan-ai">
-                    <div class="jan-message-content">
-                        <strong>Jan:</strong> Hello! I'm Jan, your AI content assistant. I'm here to help you create engaging content, schedule posts, and manage your content strategy. How can I assist you today?
+                <!-- Character Profile Selection -->
+                <div class="jan-form-group">
+                    <label>Character Profile</label>
+                    <div class="jan-character-profiles">
+                        <div class="jan-character-option">
+                            <input type="radio" id="janAnica" name="janCharacter" value="Anica">
+                            <label for="janAnica" class="jan-character-label">Anica</label>
+                        </div>
+                        <div class="jan-character-option">
+                            <input type="radio" id="janCaelum" name="janCharacter" value="Caelum">
+                            <label for="janCaelum" class="jan-character-label">Caelum</label>
+                        </div>
+                        <div class="jan-character-option">
+                            <input type="radio" id="janAurion" name="janCharacter" value="Aurion">
+                            <label for="janAurion" class="jan-character-label">Aurion</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template Label -->
+                <div class="jan-form-group">
+                    <label for="janTemplateLabel">Template Label</label>
+                    <select id="janTemplateLabel" class="jan-form-control">
+                        <option value="">Select template type...</option>
+                        <option value="news-page">News Page</option>
+                        <option value="blog-post">Blog Post</option>
+                        <option value="social-media">Social Media</option>
+                        <option value="newsletter">Newsletter</option>
+                        <option value="landing-page">Landing Page</option>
+                        <option value="custom">Custom Template</option>
+                    </select>
+                </div>
+
+                <!-- Prompt/Description -->
+                <div class="jan-form-group">
+                    <label for="janPrompt">Content Request</label>
+                    <textarea id="janPrompt" class="jan-form-control jan-textarea" 
+                            placeholder="Describe what you need help with. Include context, tone, target audience, and any specific requirements..."></textarea>
+                </div>
+
+                <!-- Schedule/Timestamp -->
+                <div class="jan-form-group">
+                    <label>Schedule/Timestamp</label>
+                    <div class="jan-datetime-group">
+                        <div>
+                            <label for="janScheduleDate">Date</label>
+                            <input type="date" id="janScheduleDate" class="jan-form-control">
+                        </div>
+                        <div>
+                            <label for="janScheduleTime">Time</label>
+                            <input type="time" id="janScheduleTime" class="jan-form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="jan-chat-messages" id="janChatMessages">
+                    <div class="jan-message jan-ai">
+                        <div class="jan-message-content">
+                            <strong>Jan:</strong> Hello! I'm Jan, your AI content assistant. Fill out the form above and I'll help you create engaging content for your schedule.
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div class="jan-chat-footer">
                 <div class="jan-quick-actions">
-                    <button class="jan-quick-btn" onclick="janQuickAction('help')">📝 Content Ideas</button>
-                    <button class="jan-quick-btn" onclick="janQuickAction('schedule')">📅 Schedule Help</button>
-                    <button class="jan-quick-btn" onclick="janQuickAction('review')">✨ Review Content</button>
-                    <button class="jan-quick-btn" onclick="janQuickAction('tips')">💡 Tips</button>
+                    <button class="jan-quick-btn" onclick="janRequestClarification()">Need Clarification</button>
+                    <button class="jan-quick-btn" onclick="janRescheduleContent()">Re-schedule</button>
+                    <button class="jan-quick-btn" onclick="janRepurposeContent()">Repurpose Content</button>
+                    <button class="jan-quick-btn" onclick="janReviewContent()">Review Changes</button>
                 </div>
                 <div class="jan-input-group">
-                    <input type="text" id="janChatInput" class="jan-chat-input" placeholder="Ask Jan anything..." onkeypress="handleJanEnter(event)">
+                    <input type="text" id="janChatInput" class="jan-chat-input" placeholder="Ask Jan for help or clarification..." onkeypress="handleJanEnter(event)">
                     <button class="jan-send-btn" onclick="sendJanMessage()">
                         <span>Send</span>
                     </button>

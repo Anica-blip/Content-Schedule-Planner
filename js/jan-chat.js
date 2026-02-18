@@ -1,6 +1,6 @@
 /**
  * Jan AI Assistant Chat Integration
- * Connects Content Schedule Planner with 3c-content-scheduler
+ * Integrated with 3c-content-scheduler persona system
  */
 
 // Toggle Jan chat overlay
@@ -8,11 +8,29 @@ function toggleJanChat() {
     const overlay = document.getElementById('janChatOverlay');
     overlay.classList.toggle('active');
     
-    // Focus input when opening
+    // Initialize form when opening
     if (overlay.classList.contains('active')) {
+        initializeJanForm();
         setTimeout(() => {
             document.getElementById('janChatInput').focus();
         }, 300);
+    }
+}
+
+// Initialize Jan form with defaults
+function initializeJanForm() {
+    // Set default date to today
+    const today = new Date();
+    const dateInput = document.getElementById('janScheduleDate');
+    if (!dateInput.value) {
+        dateInput.value = today.toISOString().split('T')[0];
+    }
+    
+    // Set default time to current time + 1 hour
+    const timeInput = document.getElementById('janScheduleTime');
+    if (!timeInput.value) {
+        const oneHourLater = new Date(today.getTime() + 60 * 60 * 1000);
+        timeInput.value = oneHourLater.toTimeString().slice(0,5);
     }
 }
 
@@ -43,9 +61,21 @@ function handleJanEnter(event) {
     }
 }
 
+// Get Jan form data
+function getJanFormData() {
+    return {
+        character: document.querySelector('input[name="janCharacter"]:checked')?.value || '',
+        templateLabel: document.getElementById('janTemplateLabel').value,
+        prompt: document.getElementById('janPrompt').value,
+        scheduleDate: document.getElementById('janScheduleDate').value,
+        scheduleTime: document.getElementById('janScheduleTime').value,
+        timestamp: new Date().toISOString()
+    };
+}
+
 // Add message to chat
 function addJanMessage(text, sender) {
-    const chatBody = document.getElementById('janChatBody');
+    const chatMessages = document.getElementById('janChatMessages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `jan-message jan-${sender}`;
     
@@ -55,107 +85,111 @@ function addJanMessage(text, sender) {
     if (sender === 'ai') {
         contentDiv.innerHTML = `<strong>Jan:</strong> ${text}`;
     } else {
-        contentDiv.textContent = text;
+        contentDiv.innerHTML = `<strong>You:</strong> ${text}`;
     }
     
     messageDiv.appendChild(contentDiv);
-    chatBody.appendChild(messageDiv);
+    chatMessages.appendChild(messageDiv);
     
     // Scroll to bottom
-    chatBody.scrollTop = chatBody.scrollHeight;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Quick action buttons
-function janQuickAction(action) {
-    let message = '';
+// Quick action: Request Clarification
+function janRequestClarification() {
+    const formData = getJanFormData();
+    const clarificationMsg = `I need clarification on this content request: Character: ${formData.character || 'Not selected'}, Template: ${formData.templateLabel || 'Not selected'}, scheduled for ${formData.scheduleDate || 'Not set'}.`;
     
-    switch(action) {
-        case 'help':
-            message = 'Can you help me brainstorm content ideas for this week?';
-            break;
-        case 'schedule':
-            message = 'What\'s the best time to schedule posts for maximum engagement?';
-            break;
-        case 'review':
-            message = 'Can you review my scheduled content and suggest improvements?';
-            break;
-        case 'tips':
-            message = 'Give me some tips for creating engaging social media content.';
-            break;
-    }
-    
-    document.getElementById('janChatInput').value = message;
-    sendJanMessage();
+    addJanMessage('I need clarification on this content request', 'user');
+    setTimeout(() => {
+        addJanMessage('I\'ve reviewed your content request. Could you provide more details about the target audience and the specific goals for this content? This will help me create more targeted and effective content.', 'ai');
+    }, 1000);
 }
 
-// Generate Jan's response (placeholder - will be replaced with actual AI integration)
+// Quick action: Reschedule Content
+function janRescheduleContent() {
+    addJanMessage('I want to reschedule this content', 'user');
+    setTimeout(() => {
+        addJanMessage('I can help you reschedule. What new date and time would work better for you? I\'ll also check for any conflicts with your existing content calendar.', 'ai');
+    }, 1000);
+}
+
+// Quick action: Repurpose Content
+function janRepurposeContent() {
+    addJanMessage('I want to repurpose this content', 'user');
+    setTimeout(() => {
+        addJanMessage('Great idea! I can help repurpose this content into different formats. Would you like me to create versions for social media, email newsletter, or blog posts? Each format will be optimized for its specific platform.', 'ai');
+    }, 1000);
+}
+
+// Quick action: Review Content
+function janReviewContent() {
+    addJanMessage('Please review the changes I requested', 'user');
+    setTimeout(() => {
+        addJanMessage('I\'ve reviewed your requested changes. The modifications look good and align with your content strategy. Would you like me to proceed with implementing these changes?', 'ai');
+    }, 1000);
+}
+
+
+// Generate Jan's response based on persona and context
 function generateJanResponse(userMessage) {
+    const formData = getJanFormData();
     const lowerMessage = userMessage.toLowerCase();
+    const character = formData.character;
+    
+    // Persona-specific greetings and responses
+    const personaGreetings = {
+        'Anica': 'Hello Legends!',
+        'Caelum': 'Hey, Creative Captains!',
+        'Aurion': 'Hey, Champs!'
+    };
+    
+    const greeting = personaGreetings[character] || 'Hello!';
+    
+    // Character-specific context
+    if (character && (lowerMessage.includes('persona') || lowerMessage.includes('character') || lowerMessage.includes('who'))) {
+        const personaInfo = {
+            'Anica': `${greeting} I'm speaking as Anica - warm, encouraging, and mentor-like. I focus on brand content writing, brand voice consistency, and training course creation. I use the ATA (Activate Thinking Approach) methodology to help you think metacognitively about your content.`,
+            'Caelum': `${greeting} I'm speaking as Caelum - creative, innovative, and visionary. I help you brainstorm unique content ideas and think outside the box. Let's create something amazing together!`,
+            'Aurion': `${greeting} I'm speaking as Aurion - energetic, motivational, and action-oriented. I'm here to help you take action and get things done. Let's make it happen!`
+        };
+        return personaInfo[character] || `I'm Jan, your AI content assistant. Select a character profile above to get started!`;
+    }
     
     // Content ideas
     if (lowerMessage.includes('content') && (lowerMessage.includes('idea') || lowerMessage.includes('brainstorm'))) {
-        return `Great! Let's brainstorm some content ideas. Based on your brand voice and the ATA methodology, here are some suggestions:
+        return `${greeting} Let's brainstorm content ideas! Based on ${character ? character + '\'s perspective' : 'the ATA methodology'}, here are some suggestions:
 
-1. **Educational Posts**: Share tips about your expertise area
+1. **Educational Posts**: Share expertise and teach your audience
 2. **Behind-the-scenes**: Show your creative process
 3. **Success Stories**: Highlight achievements and milestones
 4. **Interactive Content**: Polls, Q&A sessions, challenges
-5. **Value-driven**: Problem-solving content for your audience
+5. **Value-driven**: Problem-solving content
 
-Which type resonates most with your current goals?`;
+Which type resonates with your goals?`;
     }
     
     // Schedule timing
     if (lowerMessage.includes('schedule') || lowerMessage.includes('time') || lowerMessage.includes('when')) {
-        return `For optimal engagement, here are the best posting times:
+        return `For optimal engagement:
 
 📱 **Instagram**: 11am-1pm, 7pm-9pm
 📘 **Facebook**: 1pm-3pm weekdays
 💼 **LinkedIn**: 7am-9am, 5pm-6pm
 🐦 **Twitter**: 8am-10am, 6pm-9pm
-📺 **YouTube**: 2pm-4pm weekends
 
-These are general guidelines. I recommend testing different times and tracking your analytics to find what works best for YOUR audience!`;
-    }
-    
-    // Review content
-    if (lowerMessage.includes('review') || lowerMessage.includes('improve') || lowerMessage.includes('feedback')) {
-        return `I'd be happy to review your content! Here's what I look for:
-
-✅ **Clear Message**: Is the main point obvious?
-✅ **Engaging Hook**: Does it grab attention in the first 3 seconds?
-✅ **Call-to-Action**: What do you want readers to do?
-✅ **Brand Voice**: Does it match your 3C personality?
-✅ **Visual Appeal**: Are images/formatting optimized?
-
-Share a specific post you'd like me to review, and I'll provide detailed feedback!`;
-    }
-    
-    // Tips
-    if (lowerMessage.includes('tip') || lowerMessage.includes('advice') || lowerMessage.includes('help')) {
-        return `Here are my top tips for creating engaging content:
-
-💡 **Know Your Audience**: Speak directly to their needs and pain points
-🎯 **Be Authentic**: Your unique voice is your superpower
-📊 **Use Data**: Track what works and do more of it
-🖼️ **Visual First**: Eye-catching images stop the scroll
-💬 **Engage Back**: Reply to comments and build community
-📅 **Consistency**: Regular posting builds trust and habit
-✨ **Value Over Promotion**: 80% value, 20% selling
-
-Which area would you like to dive deeper into?`;
+Test different times and track analytics for YOUR audience!`;
     }
     
     // Default response
-    return `I'm here to help! I can assist you with:
+    return `${greeting} I'm here to help with:
 
-📝 **Content Creation**: Brainstorm ideas and write engaging posts
-📅 **Scheduling Strategy**: Find the best times to post
-✨ **Content Review**: Provide feedback and suggestions
-💡 **Best Practices**: Share tips for social media success
-🎯 **Brand Voice**: Ensure consistency with 3C values
+📝 **Content Creation**: Brainstorm and write posts
+📅 **Scheduling**: Find best posting times
+✨ **Review**: Provide feedback
+🎯 **Brand Voice**: Ensure 3C consistency
 
-What would you like to work on today?`;
+Fill out the form above and let's create great content together!`;
 }
 
 // Initialize Jan chat when page loads

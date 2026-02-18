@@ -191,6 +191,89 @@ body {
     background: #f8f9fa;
 }
 
+.jan-form-group {
+    margin-bottom: 1.25rem;
+}
+
+.jan-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.jan-form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.jan-form-control:focus {
+    outline: none;
+    border-color: var(--light-purple);
+    box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.1);
+}
+
+.jan-textarea {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.jan-character-profiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.jan-character-option {
+    position: relative;
+}
+
+.jan-character-option input[type="radio"] {
+    opacity: 0;
+    position: absolute;
+}
+
+.jan-character-label {
+    display: block;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.jan-character-option input[type="radio"]:checked + .jan-character-label {
+    border-color: var(--light-purple);
+    background: linear-gradient(135deg, var(--light-purple), var(--medium-purple));
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+}
+
+.jan-datetime-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.jan-chat-messages {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #e2e8f0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
 .jan-message {
     margin-bottom: 1rem;
     animation: messageSlide 0.3s ease;
