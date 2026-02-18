@@ -43,17 +43,17 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        slotMinTime: '06:00:00',
-        slotMaxTime: '21:00:00',
+        slotMinTime: '05:00:00',
+        slotMaxTime: '22:00:00',
         editable: true,
         selectable: true,
         height: 'auto',
         eventMaxStack: 3,
         dayMaxEventRows: false,
         eventOrder: 'start',
-        slotEventOverlap: false,
         eventOverlap: true,
         displayEventTime: true,
+        slotEventOverlap: true,
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
@@ -203,7 +203,7 @@ function openCreatePostModal(date = null) {
     }
     
     document.getElementById('imagePreview').style.display = 'none';
-    selectedImageFile = null;
+    document.getElementById('imageUrlInput').value = '';
     document.getElementById('postModal').classList.add('active');
 }
 
@@ -234,6 +234,7 @@ async function openEditPostModal(postId) {
     document.getElementById('content').value = post.content || '';
     document.getElementById('scheduledDate').value = post.scheduled_date || '';
     document.getElementById('scheduledTime').value = post.scheduled_time || '';
+    document.getElementById('imageUrlInput').value = post.image_url || '';
     
     if (post.image_url) {
         const preview = document.getElementById('imagePreview');
@@ -245,23 +246,25 @@ async function openEditPostModal(postId) {
 }
 
 function closePostModal() {
-    document.getElementById('postModal').classList.remove('active');
-    currentPost = null;
-    selectedImageFile = null;
+    document.getElementById('postModal').style.display = 'none';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imageUrlInput').value = '';
 }
 
-function handleImageSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function handleImageUrlInput(event) {
+    const url = event.target.value.trim();
+    if (!url) {
+        document.getElementById('imagePreview').style.display = 'none';
+        return;
+    }
     
-    selectedImageFile = file;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const preview = document.getElementById('imagePreview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
+    const preview = document.getElementById('imagePreview');
+    preview.src = url;
+    preview.style.display = 'block';
+    preview.onerror = function() {
+        alert('Failed to load image from URL. Please check the URL is correct.');
+        preview.style.display = 'none';
     };
-    reader.readAsDataURL(file);
 }
 
 async function handlePostSubmit(event) {
@@ -274,14 +277,8 @@ async function handlePostSubmit(event) {
     const scheduledDate = document.getElementById('scheduledDate').value;
     const scheduledTime = document.getElementById('scheduledTime').value;
     
-    let imageUrl = currentPost?.image_url || null;
-    
-    if (selectedImageFile) {
-        const uploadResult = await uploadImage(selectedImageFile);
-        if (uploadResult.success) {
-            imageUrl = uploadResult.url;
-        }
-    }
+    const imageUrlInput = document.getElementById('imageUrlInput').value.trim();
+    let imageUrl = imageUrlInput || currentPost?.image_url || null;
     
     const postData = {
         platform,
@@ -369,24 +366,6 @@ async function updatePostDate(postId, newDate) {
         let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
         posts = posts.map(p => p.id === postId ? { ...p, scheduled_date: newDate } : p);
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
-    }
-}
-
-async function uploadImage(file) {
-    try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', 'schedule-planner');
-        
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        });
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Upload error:', error);
-        return { success: false, error: error.message };
     }
 }
 
