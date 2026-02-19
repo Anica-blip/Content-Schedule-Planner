@@ -65,8 +65,17 @@ function handleJanEnter(event) {
 function getJanFormData() {
     return {
         character: document.querySelector('input[name="janCharacter"]:checked')?.value || '',
-        templateLabel: document.getElementById('janTemplateLabel').value,
+        themeLabel: document.getElementById('janThemeLabel').value,
+        brandVoice: document.getElementById('janBrandVoice').value,
+        targetAudience: document.getElementById('janTargetAudience').value,
+        templateType: document.getElementById('janTemplateType').value,
+        platform: document.getElementById('janPlatform').value,
         prompt: document.getElementById('janPrompt').value,
+        title: document.getElementById('janTitle').value,
+        description: document.getElementById('janDescription').value,
+        hashtags: document.getElementById('janHashtags').value,
+        seoKeywords: document.getElementById('janSEOKeywords').value,
+        cta: document.getElementById('janCTA').value,
         scheduleDate: document.getElementById('janScheduleDate').value,
         scheduleTime: document.getElementById('janScheduleTime').value,
         timestamp: new Date().toISOString()
@@ -98,11 +107,25 @@ function addJanMessage(text, sender) {
 // Quick action: Request Clarification
 function janRequestClarification() {
     const formData = getJanFormData();
-    const clarificationMsg = `I need clarification on this content request: Character: ${formData.character || 'Not selected'}, Template: ${formData.templateLabel || 'Not selected'}, scheduled for ${formData.scheduleDate || 'Not set'}.`;
+    const clarificationMsg = `I need clarification on this content request: Character: ${formData.character || 'Not selected'}, Theme: ${formData.themeLabel || 'Not selected'}, Platform: ${formData.platform || 'Not selected'}, scheduled for ${formData.scheduleDate || 'Not set'}.`;
     
     addJanMessage('I need clarification on this content request', 'user');
     setTimeout(() => {
-        addJanMessage('I\'ve reviewed your content request. Could you provide more details about the target audience and the specific goals for this content? This will help me create more targeted and effective content.', 'ai');
+        const formData = getJanFormData();
+        let response = 'I\'ve reviewed your content request. ';
+        
+        if (!formData.platform) {
+            response += 'Please select a platform so I can optimize the description length. ';
+        }
+        if (!formData.targetAudience) {
+            response += 'Who is the target audience? ';
+        }
+        if (!formData.brandVoice) {
+            response += 'What brand voice should I use? ';
+        }
+        
+        response += 'This will help me create more targeted and effective content.';
+        addJanMessage(response, 'ai');
     }, 1000);
 }
 
@@ -192,9 +215,111 @@ Test different times and track analytics for YOUR audience!`;
 Fill out the form above and let's create great content together!`;
 }
 
+// Platform character limits
+const platformLimits = {
+    'Instagram': 2200,
+    'Facebook': 63206,
+    'LinkedIn': 3000,
+    'Twitter/X': 280,
+    'YouTube': 5000,
+    'TikTok': 2200,
+    'Telegram': 4096,
+    'Pinterest': 500,
+    'WhatsApp Business': 1024,
+    'Discord': 2000,
+    'Forum': 10000
+};
+
+// Generate hashtags based on content
+function generateHashtags(title, templateType, themeLabel) {
+    // Standard hashtags
+    const standardHashtags = ['#ThinkItDoItOwnIt', '#WeRiseAsOne'];
+    
+    // Content-specific hashtag logic
+    let contentHashtag = '';
+    
+    // Check template type first
+    if (templateType === 'Anica Chat') {
+        contentHashtag = '#AnicaChats';
+    } else if (themeLabel.includes('Quiz')) {
+        contentHashtag = '#3CQuiz';
+    } else if (themeLabel.includes('Game')) {
+        contentHashtag = '#3CGame';
+    } else if (themeLabel.includes('Puzzle')) {
+        contentHashtag = '#3CPuzzle';
+    } else if (themeLabel.includes('Challenge')) {
+        contentHashtag = '#3CChallenge';
+    } else if (themeLabel === 'News' || themeLabel === 'News Alert') {
+        contentHashtag = '#3CNews';
+    } else if (themeLabel === 'Tutorial Guide') {
+        contentHashtag = '#3CGuide';
+    } else if (themeLabel === 'Course, Tool') {
+        contentHashtag = '#3CMiniCourse';
+    } else if (templateType === 'Blog Posts') {
+        contentHashtag = '#3CBlog';
+    } else if (title && title.toLowerCase().includes('goal')) {
+        contentHashtag = '#GoalSetting';
+    } else {
+        // Default based on template type
+        contentHashtag = '#3CContent';
+    }
+    
+    // Special case: Aurion mascot content (motivational/prompts)
+    const character = document.querySelector('input[name="janCharacter"]:checked')?.value;
+    if (character === 'Aurion' && (themeLabel === 'Promotion' || themeLabel === 'Standard Post')) {
+        contentHashtag = '#3CMascot';
+    }
+    
+    return [...standardHashtags, contentHashtag].join(' ');
+}
+
+// Update character count for description
+function updateDescriptionCharCount() {
+    const description = document.getElementById('janDescription').value;
+    const platform = document.getElementById('janPlatform').value;
+    const charCount = description.length;
+    const charCountEl = document.getElementById('janDescCharCount');
+    
+    if (platform && platformLimits[platform]) {
+        const limit = platformLimits[platform];
+        const remaining = limit - charCount;
+        const percentage = (charCount / limit) * 100;
+        
+        let color = '#718096'; // gray
+        if (percentage > 90) color = '#e53e3e'; // red
+        else if (percentage > 75) color = '#ed8936'; // orange
+        else if (percentage > 50) color = '#ecc94b'; // yellow
+        
+        charCountEl.textContent = `${charCount} / ${limit} characters (${remaining} remaining)`;
+        charCountEl.style.color = color;
+    } else {
+        charCountEl.textContent = `${charCount} characters`;
+        charCountEl.style.color = '#718096';
+    }
+}
+
+// Auto-generate hashtags when relevant fields change
+function autoGenerateHashtags() {
+    const title = document.getElementById('janTitle').value;
+    const templateType = document.getElementById('janTemplateType').value;
+    const themeLabel = document.getElementById('janThemeLabel').value;
+    
+    if (title || templateType || themeLabel) {
+        const hashtags = generateHashtags(title, templateType, themeLabel);
+        document.getElementById('janHashtags').value = hashtags;
+    }
+}
+
 // Initialize Jan chat when page loads
 window.addEventListener('load', () => {
     console.log('✨ Jan AI Assistant ready');
+    
+    // Add event listeners for auto-generation
+    document.getElementById('janTitle')?.addEventListener('input', autoGenerateHashtags);
+    document.getElementById('janTemplateType')?.addEventListener('change', autoGenerateHashtags);
+    document.getElementById('janThemeLabel')?.addEventListener('change', autoGenerateHashtags);
+    document.getElementById('janDescription')?.addEventListener('input', updateDescriptionCharCount);
+    document.getElementById('janPlatform')?.addEventListener('change', updateDescriptionCharCount);
 });
 
 // Close overlay when clicking outside
