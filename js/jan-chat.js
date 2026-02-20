@@ -273,21 +273,44 @@ function generateSocialMediaContent() {
     
     const greeting = personaGreetings[formData.character] || 'Hello!';
     
-    // Generate description based on title, prompt, and character voice
-    let description = `${greeting}\n`;
+    // Generate ORIGINAL description based on title and persona voice
+    // The content prompt is a GUIDELINE, not text to copy
+    let description = `${greeting}\n\n`;
     
-    // Add content from prompt if available
-    if (formData.prompt) {
-        description += `${formData.prompt}\n\n`;
+    // Create intelligent content based on title
+    const title = formData.title;
+    
+    // Analyse title to generate relevant opening
+    if (title.toLowerCase().includes('calm') || title.toLowerCase().includes('creative')) {
+        description += `Ever notice how the best ideas come when you're not forcing them? `;
+        description += `This issue explores the magic that happens when you let your mind breathe.\n\n`;
+    } else if (title.toLowerCase().includes('goal') || title.toLowerCase().includes('habit')) {
+        description += `Ready to turn your intentions into action? `;
+        description += `Let's talk about building the kind of habits that actually stick.\n\n`;
+    } else if (title.toLowerCase().includes('growth') || title.toLowerCase().includes('develop')) {
+        description += `Growth isn't always comfortable, but it's always worth it. `;
+        description += `Here's what we're diving into today.\n\n`;
+    } else if (title.toLowerCase().includes('issue') && title.match(/#?\d+/)) {
+        // Generic issue format
+        description += `Fresh insights, practical tools, and a bit of inspiration to fuel your journey. `;
+        description += `Let's dive in.\n\n`;
     } else {
-        description += `This is content from ${formData.character}.\n\n`;
+        // Default opening based on brand voice
+        description += `${title} - let's explore this together.\n\n`;
     }
     
-    // Add standard elements based on template type
+    // Add context based on template type
     if (formData.templateType === 'Anica Chat') {
-        description += `📥 Download. And if it sparks a thought… share it out.\n\n`;
+        description += `In this Coffee Break Chat, we're unpacking ideas that matter—the kind that shift perspectives and spark action.\n\n`;
+        description += `📥 Download it. Read it. And if it sparks a thought… share it out.\n\n`;
         description += `💛 One sip at a time.\n\n`;
         description += `CLICK THIS BUTTON [⏹️](https://3c-public-library.org/library) FOR FLIPBOOK\n\n`;
+    } else if (formData.templateType === 'Video Message') {
+        description += `Watch this short message packed with insights you can use right now.\n\n`;
+    } else if (formData.templateType === 'Blog Posts') {
+        description += `Dive deep into this topic with practical takeaways you can apply today.\n\n`;
+    } else {
+        description += `Explore this content at your own pace and see what resonates.\n\n`;
     }
     
     // Add signature
@@ -299,30 +322,48 @@ function generateSocialMediaContent() {
     document.getElementById('janDescription').value = description;
     updateDescriptionCharCount();
     
-    // Generate SEO Keywords from title and theme
+    // Generate SEO Keywords from title intelligently
     let seoKeywords = [];
     if (formData.title) {
-        // Extract key words from title
-        const titleWords = formData.title.toLowerCase().split(' ').filter(word => word.length > 3);
-        seoKeywords = titleWords.slice(0, 3);
+        // Extract meaningful keywords from title (filter out common words)
+        const commonWords = ['the', 'and', 'for', 'with', 'issue', 'chat'];
+        const titleWords = formData.title.toLowerCase()
+            .replace(/[#\-–—]/g, ' ')
+            .split(' ')
+            .filter(word => word.length > 3 && !commonWords.includes(word))
+            .slice(0, 4);
+        seoKeywords = titleWords;
     }
-    if (formData.themeLabel) {
-        seoKeywords.push(formData.themeLabel.toLowerCase());
+    // Add theme-based keywords
+    if (formData.themeLabel && formData.themeLabel !== 'Select theme...') {
+        const themeKeyword = formData.themeLabel.toLowerCase().replace(/\s+/g, '-');
+        if (!seoKeywords.includes(themeKeyword)) {
+            seoKeywords.push(themeKeyword);
+        }
     }
+    // Add brand keywords
+    seoKeywords.push('personal-growth', 'mindset');
+    
     document.getElementById('janSEOKeywords').value = seoKeywords.join(', ');
     
-    // Generate CTA based on template type
+    // Generate CTA based on template type and theme
     let cta = 'enjoy the read';
     if (formData.templateType === 'Anica Chat') {
         cta = 'enjoy the read';
-    } else if (formData.themeLabel.includes('Quiz')) {
-        cta = 'take the quiz';
-    } else if (formData.themeLabel.includes('Game')) {
-        cta = 'play the game';
-    } else if (formData.themeLabel.includes('Challenge')) {
-        cta = 'join the challenge';
     } else if (formData.templateType === 'Video Message') {
         cta = 'watch now';
+    } else if (formData.themeLabel && formData.themeLabel.toLowerCase().includes('quiz')) {
+        cta = 'take the quiz';
+    } else if (formData.themeLabel && formData.themeLabel.toLowerCase().includes('game')) {
+        cta = 'play the game';
+    } else if (formData.themeLabel && formData.themeLabel.toLowerCase().includes('challenge')) {
+        cta = 'join the challenge';
+    } else if (formData.themeLabel && formData.themeLabel.toLowerCase().includes('worksheet')) {
+        cta = 'download now';
+    } else if (formData.templateType === 'Blog Posts') {
+        cta = 'read more';
+    } else if (formData.templateType === 'Newsletter') {
+        cta = 'subscribe';
     }
     document.getElementById('janCTA').value = cta;
     
