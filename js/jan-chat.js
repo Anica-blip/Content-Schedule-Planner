@@ -34,6 +34,31 @@ function initializeJanForm() {
     }
 }
 
+// Extract title from chat message
+function extractTitleFromMessage(message) {
+    // Pattern 1: "title: Something" or "Title: Something"
+    const titlePattern1 = /title:\s*(.+?)(?:\n|$)/i;
+    const match1 = message.match(titlePattern1);
+    if (match1) return match1[1].trim();
+
+    // Pattern 2: "Issue #X - Title" or "**Issue #X - Title**"
+    const issuePattern = /\*?\*?Issue\s*#?\d+\s*[-–—]\s*(.+?)(?:\*\*|\n|$)/i;
+    const match2 = message.match(issuePattern);
+    if (match2) return match2[0].replace(/\*\*/g, '').trim();
+
+    // Pattern 3: Text in quotes "Title Here"
+    const quotePattern = /"([^"]+)"/;
+    const match3 = message.match(quotePattern);
+    if (match3) return match3[1].trim();
+
+    // Pattern 4: Text in **bold**
+    const boldPattern = /\*\*([^*]+)\*\*/;
+    const match4 = message.match(boldPattern);
+    if (match4) return match4[1].trim();
+
+    return null;
+}
+
 // Send message to Jan
 function sendJanMessage() {
     const input = document.getElementById('janChatInput');
@@ -44,12 +69,21 @@ function sendJanMessage() {
     // Add user message to chat
     addJanMessage(message, 'user');
     
+    // Extract title from message if present
+    const extractedTitle = extractTitleFromMessage(message);
+    const titleField = document.getElementById('janTitle');
+    if (extractedTitle && !titleField.value) {
+        titleField.value = extractedTitle;
+        // Trigger hashtag generation
+        autoGenerateHashtags();
+    }
+    
     // Clear input
     input.value = '';
     
     // Generate content and auto-fill fields
     setTimeout(() => {
-        const response = generateJanResponse(message);
+        const response = generateJanResponse(message, extractedTitle);
         addJanMessage(response, 'ai');
         
         // Auto-fill social media fields if request is for content creation
@@ -160,26 +194,29 @@ function janReviewContent() {
 
 
 // Generate Jan's response based on persona and context
-function generateJanResponse(userMessage) {
+function generateJanResponse(userMessage, extractedTitle = null) {
     const formData = getJanFormData();
     const lowerMessage = userMessage.toLowerCase();
     
     // Jan always addresses Anica/Chef (British English, London timezone)
     const greeting = 'Hello Chef!';
     
+    // Title acknowledgment
+    const titleNote = extractedTitle ? `\n\n✅ I've added the title: "${extractedTitle}"` : '';
+    
     // Check if request is for content creation/description
     if (lowerMessage.includes('create') || lowerMessage.includes('description') || lowerMessage.includes('post')) {
         // Generate content based on form data
         if (!formData.character) {
-            return `${greeting} Please select a character profile first (Anica, Caelum, or Aurion) so I know which voice to write in.`;
+            return `${greeting} Please select a character profile first (Anica, Caelum, or Aurion) so I know which voice to write in.${titleNote}`;
         }
         
         if (!formData.title) {
-            return `${greeting} I need a title to work with. Please add a title in the field above.`;
+            return `${greeting} I need a title to work with. Please add a title in the field above.${titleNote}`;
         }
         
         // Acknowledge the request and what Jan will do
-        let response = `${greeting} I've read your request. Creating content for **${formData.character}** voice:\n\n`;
+        let response = `${greeting} I've read your request. Creating content for **${formData.character}** voice:${titleNote}\n\n`;
         response += `📝 **Title**: ${formData.title}\n`;
         response += `🎯 **Platform**: ${formData.platform || 'Not selected'}\n`;
         response += `👥 **Audience**: ${formData.targetAudience || 'Not selected'}\n`;
@@ -191,16 +228,16 @@ function generateJanResponse(userMessage) {
     
     // Help with form fields
     if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
-        return `${greeting} Here's how to use this:\n\n1. Select character profile (Anica/Caelum/Aurion)\n2. Fill in dropdowns (Theme, Voice, Audience, etc.)\n3. Add your title and content prompt\n4. Ask me to "create description" or "generate post"\n5. I'll fill in Description, SEO Keywords, and CTA for you!\n\nReady when you are!`;
+        return `${greeting} Here's how to use this:\n\n1. Select character profile (Anica/Caelum/Aurion)\n2. Fill in dropdowns (Theme, Voice, Audience, etc.)\n3. Add your title and content prompt (or include title in your message to me)\n4. Ask me to "create description" or "generate post"\n5. I'll fill in Description, SEO Keywords, and CTA for you!\n\nReady when you are!${titleNote}`;
     }
     
     // Schedule timing (London timezone)
     if (lowerMessage.includes('schedule') || lowerMessage.includes('time') || lowerMessage.includes('when')) {
-        return `For optimal engagement (London time):\n\n📱 **Instagram**: 11:00-13:00, 19:00-21:00\n📘 **Facebook**: 13:00-15:00 weekdays\n💼 **LinkedIn**: 07:00-09:00, 17:00-18:00\n🐦 **Twitter**: 08:00-10:00, 18:00-21:00\n\nTest different times and track analytics for YOUR audience!`;
+        return `For optimal engagement (London time):\n\n📱 **Instagram**: 11:00-13:00, 19:00-21:00\n📘 **Facebook**: 13:00-15:00 weekdays\n💼 **LinkedIn**: 07:00-09:00, 17:00-18:00\n🐦 **Twitter**: 08:00-10:00, 18:00-21:00\n\nTest different times and track analytics for YOUR audience!${titleNote}`;
     }
     
     // Default response
-    return `${greeting} I'm here to help you create content! Fill out the form above (character, title, prompt) and ask me to "create a description" or "generate post content". I'll handle the rest!`;
+    return `${greeting} I'm here to help you create content! Fill out the form above (character, title, prompt) and ask me to "create a description" or "generate post content". I'll handle the rest!${titleNote}`;
 }
 
 // Platform character limits
