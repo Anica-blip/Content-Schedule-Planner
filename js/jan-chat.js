@@ -193,6 +193,73 @@ function janReviewContent() {
 }
 
 
+// Apply refinement to existing content
+function applyRefinement(userMessage) {
+    const lowerMsg = userMessage.toLowerCase();
+    const currentDescription = document.getElementById('janDescription').value;
+    
+    if (!currentDescription || !janConversationContext.lastGeneratedContent) {
+        return null; // No content to refine
+    }
+    
+    let refinedDescription = currentDescription;
+    let changes = [];
+    
+    // Detect "add emoji" requests
+    if (lowerMsg.includes('add emoji') || lowerMsg.includes('add the emoji')) {
+        const emojiMatch = userMessage.match(/[☕✨🎯💡🌟⚡️💛📥]/g);
+        if (emojiMatch) {
+            // Check where to add
+            if (lowerMsg.includes('start') || lowerMsg.includes('beginning') || lowerMsg.includes('title')) {
+                const titleField = document.getElementById('janTitle');
+                if (titleField && !titleField.value.includes(emojiMatch[0])) {
+                    titleField.value = `${emojiMatch[0]} ${titleField.value}`;
+                    changes.push(`Added ${emojiMatch[0]} to the start of the title`);
+                }
+            }
+        }
+    }
+    
+    // Detect "remove URL" requests
+    if (lowerMsg.includes('remove url') || lowerMsg.includes('remove the url') || lowerMsg.includes('take out url')) {
+        // Remove markdown links
+        refinedDescription = refinedDescription.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+        // Remove standalone URLs
+        refinedDescription = refinedDescription.replace(/https?:\/\/[^\s]+/g, '');
+        changes.push('Removed all URLs from description');
+    }
+    
+    // Detect "remove link" requests
+    if (lowerMsg.includes('remove link') || lowerMsg.includes('no link')) {
+        refinedDescription = refinedDescription.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+        changes.push('Removed links from description');
+    }
+    
+    // Detect "change sign-off" requests
+    const signOffMatch = userMessage.match(/sign-?off\s+(?:with\s+)?(.+?)(?:\.|$)/i);
+    if (signOffMatch || lowerMsg.includes('only') && lowerMsg.includes('anica')) {
+        // Remove existing signature section
+        refinedDescription = refinedDescription.replace(/⚡️.*$/s, '');
+        // Add new sign-off
+        const newSignOff = signOffMatch ? signOffMatch[1].trim() : '— Anica';
+        refinedDescription += `\n${newSignOff}`;
+        changes.push(`Changed sign-off to: ${newSignOff}`);
+    }
+    
+    // Apply changes if any were made
+    if (changes.length > 0) {
+        document.getElementById('janDescription').value = refinedDescription;
+        updateDescriptionCharCount();
+        
+        janConversationContext.lastGeneratedContent.description = refinedDescription;
+        janConversationContext.userInstructions.push(userMessage);
+        
+        return changes;
+    }
+    
+    return null;
+}
+
 // Generate Jan's response based on persona and context
 function generateJanResponse(userMessage, extractedTitle = null) {
     const formData = getJanFormData();
@@ -204,8 +271,21 @@ function generateJanResponse(userMessage, extractedTitle = null) {
     // Title acknowledgment
     const titleNote = extractedTitle ? `\n\n✅ I've added the title: "${extractedTitle}"` : '';
     
+    // Check if this is a refinement request on existing content
+    if (janConversationContext.lastGeneratedContent) {
+        const refinementChanges = applyRefinement(userMessage);
+        if (refinementChanges) {
+            let response = `${greeting} Done! I've updated the content:\n\n`;
+            refinementChanges.forEach(change => {
+                response += `✅ ${change}\n`;
+            });
+            response += `\nCheck the Description field - it's been refined based on your request.`;
+            return response;
+        }
+    }
+    
     // Check if request is for content creation/description
-    if (lowerMessage.includes('create') || lowerMessage.includes('description') || lowerMessage.includes('post')) {
+    if (lowerMessage.includes('create') || lowerMessage.includes('description') || lowerMessage.includes('post') || lowerMessage.includes('generate')) {
         // Generate content based on form data
         if (!formData.character) {
             return `${greeting} Please select a character profile first (Anica, Caelum, or Aurion) so I know which voice to write in.${titleNote}`;
@@ -215,13 +295,28 @@ function generateJanResponse(userMessage, extractedTitle = null) {
             return `${greeting} I need a title to work with. Please add a title in the field above.${titleNote}`;
         }
         
+        // Parse content prompt as instructions
+        const instructions = parseContentInstructions(formData.prompt);
+        
         // Acknowledge the request and what Jan will do
-        let response = `${greeting} I've read your request. Creating content for **${formData.character}** voice:${titleNote}\n\n`;
+        let response = `${greeting} I've read your instructions. Creating content for **${formData.character}** voice:${titleNote}\n\n`;
         response += `📝 **Title**: ${formData.title}\n`;
-        response += `🎯 **Platform**: ${formData.platform || 'Not selected'}\n`;
-        response += `👥 **Audience**: ${formData.targetAudience || 'Not selected'}\n`;
-        response += `🎨 **Theme**: ${formData.themeLabel || 'Not selected'}\n\n`;
-        response += `I'm generating the description, SEO keywords, and CTA now. Check the fields below!`;
+        
+        // Show understood instructions
+        if (formData.prompt) {
+            response += `\n📋 **Instructions understood**:\n`;
+            if (instructions.length) response += `• Length: ${instructions.length} paragraph\n`;
+            if (instructions.useNLP) response += `• Style: NLP language patterns\n`;
+            if (instructions.includeEmojis) response += `• Emojis: ${instructions.specificEmojis ? instructions.specificEmojis.join(' ') : 'Yes'}\n`;
+            if (instructions.emojiPositions.length > 0) response += `• Emoji placement: ${instructions.emojiPositions.join(', ')}\n`;
+            if (instructions.includeFlipbookButton) response += `• Flipbook button: ${instructions.flipbookNoURL ? 'without URL' : 'with URL'}\n`;
+            if (instructions.signOff) response += `• Sign-off: ${instructions.signOff}\n`;
+            if (!instructions.includeURL) response += `• URLs: Excluded\n`;
+        }
+        
+        response += `\n🎯 **Platform**: ${formData.platform || 'Not selected'}\n`;
+        response += `👥 **Audience**: ${formData.targetAudience || 'Not selected'}\n\n`;
+        response += `Generating the description, SEO keywords, and CTA now based on these instructions!`;
         
         return response;
     }
@@ -255,7 +350,90 @@ const platformLimits = {
     'Forum': 10000
 };
 
-// Generate and auto-fill social media content fields
+// Store conversation context for intelligent iteration
+let janConversationContext = {
+    lastGeneratedContent: null,
+    userInstructions: [],
+    contentHistory: []
+};
+
+// Parse content prompt as INSTRUCTIONS (not text to copy)
+function parseContentInstructions(prompt) {
+    if (!prompt) return {};
+    
+    const instructions = {
+        length: 'short', // default
+        style: 'conversational',
+        includeEmojis: false,
+        emojiPositions: [],
+        includeURL: true,
+        includeFlipbookButton: false,
+        signOff: null,
+        useNLP: false,
+        platform: null
+    };
+    
+    const lower = prompt.toLowerCase();
+    
+    // Length detection
+    if (lower.includes('short paragraph') || lower.includes('brief')) {
+        instructions.length = 'short';
+    } else if (lower.includes('long') || lower.includes('detailed')) {
+        instructions.length = 'long';
+    }
+    
+    // NLP language detection
+    if (lower.includes('nlp') || lower.includes('natural language')) {
+        instructions.useNLP = true;
+    }
+    
+    // Emoji instructions
+    if (lower.includes('emoji')) {
+        instructions.includeEmojis = true;
+        
+        // Check for specific emoji placement
+        if (lower.includes('start of title') || lower.includes('beginning of title')) {
+            instructions.emojiPositions.push('title-start');
+        }
+        if (lower.includes('end') || lower.includes('after')) {
+            instructions.emojiPositions.push('end');
+        }
+        
+        // Extract specific emojis mentioned
+        const emojiMatch = prompt.match(/[☕✨🎯💡🌟⚡️💛📥]/g);
+        if (emojiMatch) {
+            instructions.specificEmojis = emojiMatch;
+        }
+    }
+    
+    // URL/Link instructions
+    if (lower.includes('leave url out') || lower.includes('no url') || lower.includes('without url')) {
+        instructions.includeURL = false;
+    }
+    
+    // Flipbook button
+    if (lower.includes('flipbook') || lower.includes('click button')) {
+        instructions.includeFlipbookButton = true;
+        if (lower.includes('leave url out')) {
+            instructions.flipbookNoURL = true;
+        }
+    }
+    
+    // Sign-off detection
+    const signOffMatch = prompt.match(/sign-?off\s+(?:only\s+)?with\s+(.+?)(?:\.|$)/i);
+    if (signOffMatch) {
+        instructions.signOff = signOffMatch[1].trim();
+    }
+    
+    // Platform detection
+    if (lower.includes('telegram')) instructions.platform = 'Telegram';
+    if (lower.includes('instagram')) instructions.platform = 'Instagram';
+    if (lower.includes('linkedin')) instructions.platform = 'LinkedIn';
+    
+    return instructions;
+}
+
+// Generate intelligent content based on instructions
 function generateSocialMediaContent() {
     const formData = getJanFormData();
     
@@ -264,59 +442,80 @@ function generateSocialMediaContent() {
         return;
     }
     
-    // Persona-specific greetings for the PUBLIC content (not Jan's voice)
+    // Parse instructions from content prompt
+    const instructions = parseContentInstructions(formData.prompt);
+    
+    // Persona-specific greetings
     const personaGreetings = {
         'Anica': 'Hello Legends!',
         'Caelum': 'Hey, Creative Captains!',
         'Aurion': 'Hey, Champs!'
     };
     
+    let description = '';
+    
+    // Add emoji at start of title if instructed
+    let displayTitle = formData.title;
+    if (instructions.emojiPositions.includes('title-start') && instructions.specificEmojis) {
+        displayTitle = `${instructions.specificEmojis[0]} ${formData.title}`;
+    }
+    
+    // Start with greeting
     const greeting = personaGreetings[formData.character] || 'Hello!';
+    description += `${greeting}\n\n`;
     
-    // Generate ORIGINAL description based on title and persona voice
-    // The content prompt is a GUIDELINE, not text to copy
-    let description = `${greeting}\n\n`;
+    // Generate intelligent opening based on title theme
+    const title = formData.title.toLowerCase();
+    let opening = '';
     
-    // Create intelligent content based on title
-    const title = formData.title;
-    
-    // Analyse title to generate relevant opening
-    if (title.toLowerCase().includes('calm') || title.toLowerCase().includes('creative')) {
-        description += `Ever notice how the best ideas come when you're not forcing them? `;
-        description += `This issue explores the magic that happens when you let your mind breathe.\n\n`;
-    } else if (title.toLowerCase().includes('goal') || title.toLowerCase().includes('habit')) {
-        description += `Ready to turn your intentions into action? `;
-        description += `Let's talk about building the kind of habits that actually stick.\n\n`;
-    } else if (title.toLowerCase().includes('growth') || title.toLowerCase().includes('develop')) {
-        description += `Growth isn't always comfortable, but it's always worth it. `;
-        description += `Here's what we're diving into today.\n\n`;
-    } else if (title.toLowerCase().includes('issue') && title.match(/#?\d+/)) {
-        // Generic issue format
-        description += `Fresh insights, practical tools, and a bit of inspiration to fuel your journey. `;
-        description += `Let's dive in.\n\n`;
+    if (title.includes('calm') || title.includes('creative') || title.includes('bloom')) {
+        opening = `Ever notice how the best ideas arrive when you stop chasing them? This issue explores the art of letting creativity flow naturally.`;
+    } else if (title.includes('goal') || title.includes('habit') || title.includes('setting')) {
+        opening = `Ready to transform intentions into reality? Let's dive into building habits that actually last.`;
+    } else if (title.includes('growth') || title.includes('develop') || title.includes('journey')) {
+        opening = `Growth happens in the spaces between comfort and challenge. Here's what we're exploring today.`;
+    } else if (title.includes('engine') || title.includes('power') || title.includes('energy')) {
+        opening = `Sometimes the most powerful move is knowing when to pause and recalibrate. Let's talk about sustainable momentum.`;
     } else {
-        // Default opening based on brand voice
-        description += `${title} - let's explore this together.\n\n`;
+        // Generic but engaging opening
+        opening = `Fresh perspectives and practical insights to fuel your journey forward.`;
     }
     
-    // Add context based on template type
-    if (formData.templateType === 'Anica Chat') {
-        description += `In this Coffee Break Chat, we're unpacking ideas that matter—the kind that shift perspectives and spark action.\n\n`;
-        description += `📥 Download it. Read it. And if it sparks a thought… share it out.\n\n`;
-        description += `💛 One sip at a time.\n\n`;
-        description += `CLICK THIS BUTTON [⏹️](https://3c-public-library.org/library) FOR FLIPBOOK\n\n`;
-    } else if (formData.templateType === 'Video Message') {
-        description += `Watch this short message packed with insights you can use right now.\n\n`;
-    } else if (formData.templateType === 'Blog Posts') {
-        description += `Dive deep into this topic with practical takeaways you can apply today.\n\n`;
+    // Apply length instruction
+    if (instructions.length === 'short') {
+        description += `${opening}\n\n`;
     } else {
-        description += `Explore this content at your own pace and see what resonates.\n\n`;
+        description += `${opening}\n\n`;
+        description += `In this piece, we're unpacking ideas that shift perspectives and spark meaningful action.\n\n`;
     }
     
-    // Add signature
-    description += `⚡️ **"Think it. Do it. OWN it!"** ⚡️\n\n`;
-    description += `🌐 [www.3c-innergrowth.com](http://www.3c-innergrowth.com/)\n\n`;
-    description += `☝🏻 [Conscious Confident Choices](https://t.me/+9nzVQANylDY5Y2Y0) ☝🏻`;
+    // Add flipbook button if instructed
+    if (instructions.includeFlipbookButton) {
+        if (instructions.flipbookNoURL) {
+            description += `CLICK BUTTON ⏹️ TO OPEN FLIPBOOK\n\n`;
+        } else {
+            description += `CLICK THIS BUTTON [⏹️](https://3c-public-library.org/library) FOR FLIPBOOK\n\n`;
+        }
+    }
+    
+    // Add sign-off
+    if (instructions.signOff) {
+        description += `${instructions.signOff}`;
+    } else {
+        // Default signature
+        description += `⚡️ **"Think it. Do it. OWN it!"** ⚡️\n\n`;
+        if (instructions.includeURL) {
+            description += `🌐 [www.3c-innergrowth.com](http://www.3c-innergrowth.com/)\n\n`;
+            description += `☝🏻 [Conscious Confident Choices](https://t.me/+9nzVQANylDY5Y2Y0) ☝🏻`;
+        }
+    }
+    
+    // Store in context for iteration
+    janConversationContext.lastGeneratedContent = {
+        description: description,
+        title: displayTitle,
+        instructions: instructions
+    };
     
     // Auto-fill description field
     document.getElementById('janDescription').value = description;
