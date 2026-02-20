@@ -47,10 +47,15 @@ function sendJanMessage() {
     // Clear input
     input.value = '';
     
-    // Simulate AI response (replace with actual API call later)
+    // Generate content and auto-fill fields
     setTimeout(() => {
         const response = generateJanResponse(message);
         addJanMessage(response, 'ai');
+        
+        // Auto-fill social media fields if request is for content creation
+        if (message.toLowerCase().includes('create') || message.toLowerCase().includes('description') || message.toLowerCase().includes('post')) {
+            generateSocialMediaContent();
+        }
     }, 1000);
 }
 
@@ -158,61 +163,44 @@ function janReviewContent() {
 function generateJanResponse(userMessage) {
     const formData = getJanFormData();
     const lowerMessage = userMessage.toLowerCase();
-    const character = formData.character;
     
-    // Persona-specific greetings and responses
-    const personaGreetings = {
-        'Anica': 'Hello Legends!',
-        'Caelum': 'Hey, Creative Captains!',
-        'Aurion': 'Hey, Champs!'
-    };
+    // Jan always addresses Anica/Chef (British English, London timezone)
+    const greeting = 'Hello Chef!';
     
-    const greeting = personaGreetings[character] || 'Hello!';
-    
-    // Character-specific context
-    if (character && (lowerMessage.includes('persona') || lowerMessage.includes('character') || lowerMessage.includes('who'))) {
-        const personaInfo = {
-            'Anica': `${greeting} I'm speaking as Anica - warm, encouraging, and mentor-like. I focus on brand content writing, brand voice consistency, and training course creation. I use the ATA (Activate Thinking Approach) methodology to help you think metacognitively about your content.`,
-            'Caelum': `${greeting} I'm speaking as Caelum - creative, innovative, and visionary. I help you brainstorm unique content ideas and think outside the box. Let's create something amazing together!`,
-            'Aurion': `${greeting} I'm speaking as Aurion - energetic, motivational, and action-oriented. I'm here to help you take action and get things done. Let's make it happen!`
-        };
-        return personaInfo[character] || `I'm Jan, your AI content assistant. Select a character profile above to get started!`;
+    // Check if request is for content creation/description
+    if (lowerMessage.includes('create') || lowerMessage.includes('description') || lowerMessage.includes('post')) {
+        // Generate content based on form data
+        if (!formData.character) {
+            return `${greeting} Please select a character profile first (Anica, Caelum, or Aurion) so I know which voice to write in.`;
+        }
+        
+        if (!formData.title) {
+            return `${greeting} I need a title to work with. Please add a title in the field above.`;
+        }
+        
+        // Acknowledge the request and what Jan will do
+        let response = `${greeting} I've read your request. Creating content for **${formData.character}** voice:\n\n`;
+        response += `📝 **Title**: ${formData.title}\n`;
+        response += `🎯 **Platform**: ${formData.platform || 'Not selected'}\n`;
+        response += `👥 **Audience**: ${formData.targetAudience || 'Not selected'}\n`;
+        response += `🎨 **Theme**: ${formData.themeLabel || 'Not selected'}\n\n`;
+        response += `I'm generating the description, SEO keywords, and CTA now. Check the fields below!`;
+        
+        return response;
     }
     
-    // Content ideas
-    if (lowerMessage.includes('content') && (lowerMessage.includes('idea') || lowerMessage.includes('brainstorm'))) {
-        return `${greeting} Let's brainstorm content ideas! Based on ${character ? character + '\'s perspective' : 'the ATA methodology'}, here are some suggestions:
-
-1. **Educational Posts**: Share expertise and teach your audience
-2. **Behind-the-scenes**: Show your creative process
-3. **Success Stories**: Highlight achievements and milestones
-4. **Interactive Content**: Polls, Q&A sessions, challenges
-5. **Value-driven**: Problem-solving content
-
-Which type resonates with your goals?`;
+    // Help with form fields
+    if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
+        return `${greeting} Here's how to use this:\n\n1. Select character profile (Anica/Caelum/Aurion)\n2. Fill in dropdowns (Theme, Voice, Audience, etc.)\n3. Add your title and content prompt\n4. Ask me to "create description" or "generate post"\n5. I'll fill in Description, SEO Keywords, and CTA for you!\n\nReady when you are!`;
     }
     
-    // Schedule timing
+    // Schedule timing (London timezone)
     if (lowerMessage.includes('schedule') || lowerMessage.includes('time') || lowerMessage.includes('when')) {
-        return `For optimal engagement:
-
-📱 **Instagram**: 11am-1pm, 7pm-9pm
-📘 **Facebook**: 1pm-3pm weekdays
-💼 **LinkedIn**: 7am-9am, 5pm-6pm
-🐦 **Twitter**: 8am-10am, 6pm-9pm
-
-Test different times and track analytics for YOUR audience!`;
+        return `For optimal engagement (London time):\n\n📱 **Instagram**: 11:00-13:00, 19:00-21:00\n📘 **Facebook**: 13:00-15:00 weekdays\n💼 **LinkedIn**: 07:00-09:00, 17:00-18:00\n🐦 **Twitter**: 08:00-10:00, 18:00-21:00\n\nTest different times and track analytics for YOUR audience!`;
     }
     
     // Default response
-    return `${greeting} I'm here to help with:
-
-📝 **Content Creation**: Brainstorm and write posts
-📅 **Scheduling**: Find best posting times
-✨ **Review**: Provide feedback
-🎯 **Brand Voice**: Ensure 3C consistency
-
-Fill out the form above and let's create great content together!`;
+    return `${greeting} I'm here to help you create content! Fill out the form above (character, title, prompt) and ask me to "create a description" or "generate post content". I'll handle the rest!`;
 }
 
 // Platform character limits
@@ -229,6 +217,80 @@ const platformLimits = {
     'Discord': 2000,
     'Forum': 10000
 };
+
+// Generate and auto-fill social media content fields
+function generateSocialMediaContent() {
+    const formData = getJanFormData();
+    
+    // Only generate if we have minimum required data
+    if (!formData.character || !formData.title) {
+        return;
+    }
+    
+    // Persona-specific greetings for the PUBLIC content (not Jan's voice)
+    const personaGreetings = {
+        'Anica': 'Hello Legends!',
+        'Caelum': 'Hey, Creative Captains!',
+        'Aurion': 'Hey, Champs!'
+    };
+    
+    const greeting = personaGreetings[formData.character] || 'Hello!';
+    
+    // Generate description based on title, prompt, and character voice
+    let description = `${greeting}\n`;
+    
+    // Add content from prompt if available
+    if (formData.prompt) {
+        description += `${formData.prompt}\n\n`;
+    } else {
+        description += `This is content from ${formData.character}.\n\n`;
+    }
+    
+    // Add standard elements based on template type
+    if (formData.templateType === 'Anica Chat') {
+        description += `📥 Download. And if it sparks a thought… share it out.\n\n`;
+        description += `💛 One sip at a time.\n\n`;
+        description += `CLICK THIS BUTTON [⏹️](https://3c-public-library.org/library) FOR FLIPBOOK\n\n`;
+    }
+    
+    // Add signature
+    description += `⚡️ **"Think it. Do it. OWN it!"** ⚡️\n\n`;
+    description += `🌐 [www.3c-innergrowth.com](http://www.3c-innergrowth.com/)\n\n`;
+    description += `☝🏻 [Conscious Confident Choices](https://t.me/+9nzVQANylDY5Y2Y0) ☝🏻`;
+    
+    // Auto-fill description field
+    document.getElementById('janDescription').value = description;
+    updateDescriptionCharCount();
+    
+    // Generate SEO Keywords from title and theme
+    let seoKeywords = [];
+    if (formData.title) {
+        // Extract key words from title
+        const titleWords = formData.title.toLowerCase().split(' ').filter(word => word.length > 3);
+        seoKeywords = titleWords.slice(0, 3);
+    }
+    if (formData.themeLabel) {
+        seoKeywords.push(formData.themeLabel.toLowerCase());
+    }
+    document.getElementById('janSEOKeywords').value = seoKeywords.join(', ');
+    
+    // Generate CTA based on template type
+    let cta = 'enjoy the read';
+    if (formData.templateType === 'Anica Chat') {
+        cta = 'enjoy the read';
+    } else if (formData.themeLabel.includes('Quiz')) {
+        cta = 'take the quiz';
+    } else if (formData.themeLabel.includes('Game')) {
+        cta = 'play the game';
+    } else if (formData.themeLabel.includes('Challenge')) {
+        cta = 'join the challenge';
+    } else if (formData.templateType === 'Video Message') {
+        cta = 'watch now';
+    }
+    document.getElementById('janCTA').value = cta;
+    
+    // Hashtags are already auto-generated by existing event listeners
+}
 
 // Generate hashtags based on content
 function generateHashtags(title, templateType, themeLabel) {
