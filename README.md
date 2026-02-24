@@ -1,7 +1,7 @@
 # 3C Content Schedule Planner
 
 **Built by:** Chef Anica-blip for 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.5 (Anthropic)  
+**AI Assistant:** Claude Sonnet 4.6 (Anthropic)  
 **Live URL:** https://planner.3c-public-library.org
 
 A modern social media content calendar for scheduling posts across multiple platforms with Cloudflare R2 image storage and Supabase database.
