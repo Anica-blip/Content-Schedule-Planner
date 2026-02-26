@@ -88,7 +88,6 @@ function initCalendar() {
             html += '</div></div>';
             
             return { html: html };
-        },
         }
     });
     calendar.render();
