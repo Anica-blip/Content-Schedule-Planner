@@ -69,46 +69,26 @@ function initCalendar() {
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             const view = calendar.view.type;
-            
-            console.log('Rendering event:', post.title, 'View:', view, 'Thumbnail:', post.thumbnail);
-            
-            // Different layouts for month vs week/day
             const isMonthView = view === 'dayGridMonth';
-            const imgSize = isMonthView ? '40px' : '25px';
-            const fontSize = isMonthView ? '8.5px' : '7px';
-            const timeFontSize = isMonthView ? '8px' : '6.5px';
-            const badgeFontSize = isMonthView ? '7px' : '6px';
-            const containerPadding = isMonthView ? '5px' : '2px';
-            const gap = isMonthView ? '5px' : '2px';
             
-            // Fixed-size container with flex layout
-            let html = '<div style="display:flex; gap:' + gap + '; padding:' + containerPadding + '; align-items:flex-start; width:100%; height:100%; overflow:hidden; background:rgba(255,255,255,0.95); border-radius:6px; box-sizing:border-box;">';
+            const fontSize = isMonthView ? '10px' : '8px';
+            const timeFontSize = isMonthView ? '9px' : '7px';
+            const badgeFontSize = isMonthView ? '8px' : '7px';
+            const padding = isMonthView ? '6px' : '4px';
             
-            // Thumbnail (left side)
-            if (post.thumbnail) {
-                html += '<img src="' + post.thumbnail + '" alt="Post thumbnail" style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; max-width:' + imgSize + '; max-height:' + imgSize + '; object-fit:cover; border-radius:4px; flex-shrink:0; display:block !important; border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">';
-                html += '<div style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:none; align-items:center; justify-content:center; font-size:' + (isMonthView ? '18px' : '14px') + ';">📷</div>';
-            } else {
-                html += '<div style="width:' + imgSize + '; height:' + imgSize + '; min-width:' + imgSize + '; min-height:' + imgSize + '; background:#e0e0e0; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:' + (isMonthView ? '18px' : '14px') + ';">📷</div>';
-            }
+            let html = '<div style="display:flex; flex-direction:column; gap:3px; padding:' + padding + '; width:100%; height:100%; overflow:hidden; background:rgba(75, 85, 180, 0.85); border-radius:6px; box-sizing:border-box; border-left:3px solid ' + platform.color + ';">';
             
-            // Info (right side) - flexible width with wrapping
-            html += '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; overflow:hidden;">';
+            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.3; color:#ffffff; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">' + (post.title || 'Untitled') + '</div>';
             
-            // Title (wraps to multiple lines) - dark text, word-wrap enabled
-            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.3; overflow:hidden; word-wrap:break-word; overflow-wrap:break-word; color:#1a0b2e; max-height:' + (isMonthView ? '26px' : '20px') + ';">' + (post.title || 'Untitled') + '</div>';
-            
-            // Time (if exists) - dark text
+            html += '<div style="display:flex; gap:4px; align-items:center;">';
             if (post.time) {
-                html += '<div style="font-size:' + timeFontSize + '; color:#1a0b2e; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + post.time + '</div>';
+                html += '<span style="font-size:' + timeFontSize + '; color:rgba(255,255,255,0.9);">🕐 ' + post.time + '</span>';
             }
-            
-            // Platform badge - positioned at bottom
-            html += '<div style="display:inline-block; background:' + platform.color + '; color:white; font-size:' + badgeFontSize + '; font-weight:700; padding:2px 4px; border-radius:3px; width:fit-content; margin-top:auto; line-height:1;">' + platform.abbr + '</div>';
-            
+            html += '<span style="background:' + platform.color + '; color:#fff; padding:1px 4px; border-radius:3px; font-size:' + badgeFontSize + '; font-weight:600; white-space:nowrap;">' + platform.abbr + '</span>';
             html += '</div></div>';
             
             return { html: html };
+        },
         }
     });
     calendar.render();
@@ -168,8 +148,6 @@ async function loadPosts() {
             title: post.title,
             date: startDateTime,
             platform: post.platform,
-            image_url: post.image_url,
-            has_image: !!post.image_url
         });
         
         calendar.addEvent({
@@ -183,7 +161,6 @@ async function loadPosts() {
                 title: post.title,
                 content: post.content,
                 time: post.scheduled_time,
-                thumbnail: post.image_url
             }
         });
     });
@@ -203,7 +180,6 @@ function openCreatePostModal(date = null) {
     }
     
     document.getElementById('imagePreview').style.display = 'none';
-    document.getElementById('imageUrlInput').value = '';
     document.getElementById('postModal').classList.add('active');
 }
 
@@ -234,13 +210,6 @@ async function openEditPostModal(postId) {
     document.getElementById('content').value = post.content || '';
     document.getElementById('scheduledDate').value = post.scheduled_date || '';
     document.getElementById('scheduledTime').value = post.scheduled_time || '';
-    document.getElementById('imageUrlInput').value = post.image_url || '';
-    
-    if (post.image_url) {
-        const preview = document.getElementById('imagePreview');
-        preview.src = post.image_url;
-        preview.style.display = 'block';
-    }
     
     document.getElementById('postModal').classList.add('active');
 }
@@ -248,28 +217,9 @@ async function openEditPostModal(postId) {
 function closePostModal() {
     document.getElementById('postModal').style.display = 'none';
     document.getElementById('imagePreview').style.display = 'none';
-    document.getElementById('imageUrlInput').value = '';
 }
 
 function handleImageUrlInput(event) {
-    const url = event.target.value.trim();
-    if (!url) {
-        document.getElementById('imagePreview').style.display = 'none';
-        return;
-    }
-    
-    const preview = document.getElementById('imagePreview');
-    preview.src = url;
-    preview.style.display = 'block';
-    preview.onerror = function() {
-        alert('Failed to load image from URL. Please check the URL is correct.');
-        preview.style.display = 'none';
-    };
-}
-
-async function handlePostSubmit(event) {
-    event.preventDefault();
-    
     const postId = document.getElementById('postId').value;
     const platform = document.getElementById('platform').value;
     const title = document.getElementById('title').value;
@@ -277,8 +227,6 @@ async function handlePostSubmit(event) {
     const scheduledDate = document.getElementById('scheduledDate').value;
     const scheduledTime = document.getElementById('scheduledTime').value;
     
-    const imageUrlInput = document.getElementById('imageUrlInput').value.trim();
-    let imageUrl = imageUrlInput || currentPost?.image_url || null;
     
     const postData = {
         platform,
@@ -286,7 +234,6 @@ async function handlePostSubmit(event) {
         content,
         scheduled_date: scheduledDate,
         scheduled_time: scheduledTime,
-        image_url: imageUrl,
         status: 'scheduled'
     };
     
