@@ -93,34 +93,6 @@
                 <button class="close-btn" onclick="closePostModal()">&times;</button>
             </div>
             <form id="postForm" onsubmit="handlePostSubmit(event)">
-                <!-- Auth Check -->
-                <script>
-                    // Check if user is logged in before loading app
-                    window.addEventListener('DOMContentLoaded', async () => {
-                        // Get credentials from config.js only
-                        const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
-                        const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
-                        
-                        if (url && key && url !== '' && key !== '') {
-                            try {
-                                const client = supabase.createClient(url, key);
-                                const { data: { session } } = await client.auth.getSession();
-                                
-                                if (!session) {
-                                    // Not logged in, redirect to login page
-                                    window.location.href = 'login.html';
-                                }
-                            } catch (error) {
-                                console.error('Auth check failed:', error);
-                                window.location.href = 'login.html';
-                            }
-                        } else {
-                            // No credentials configured in config.js, redirect to login
-                            console.error('Please configure SUPABASE_URL and SUPABASE_ANON_KEY in config.js');
-                            window.location.href = 'login.html';
-                        }
-                    });
-                </script>
                 <input type="hidden" id="postId">
                 <div class="form-group">
                     <label class="form-label">Platform *</label>

@@ -66,24 +66,51 @@ function showMessage(msg, type) {
     setTimeout(() => div.classList.remove('show'), 3000);
 }
 
-function loadLinks() {
-    const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
-    Object.keys(links).forEach(key => {
-        const input = document.querySelector(`input[data-key="${key}"]`);
-        if (input) input.value = links[key];
-    });
+async function loadLinks() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('navigation_links')
+            .select('*');
+        
+        if (error) throw error;
+        
+        if (data) {
+            data.forEach(link => {
+                const input = document.querySelector(`input[data-key="${link.key}"]`);
+                if (input) input.value = link.url;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading links:', error);
+        showMessage('Failed to load links', 'error');
+    }
 }
 
-function saveLink(key) {
+async function saveLink(key) {
     if (!isAuthenticated) return showMessage('Auth required', 'error');
     const input = document.querySelector(`input[data-key="${key}"]`);
     const url = input.value.trim();
     if (!url) return showMessage('Enter URL', 'error');
     try { new URL(url); } catch (e) { return showMessage('Invalid URL', 'error'); }
-    const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
-    links[key] = url;
-    localStorage.setItem('navLinks', JSON.stringify(links));
-    showMessage(`✓ ${key} saved!`, 'success');
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { error } = await supabaseClient
+            .from('navigation_links')
+            .upsert({ 
+                key: key, 
+                url: url,
+                user_id: user.id,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'key,user_id' });
+        
+        if (error) throw error;
+        showMessage(`✓ ${key} saved!`, 'success');
+    } catch (error) {
+        console.error('Error saving link:', error);
+        showMessage('Failed to save link', 'error');
+    }
 }
 
 function editLink(key) {
@@ -92,14 +119,25 @@ function editLink(key) {
     showMessage(`Editing ${key}...`, 'success');
 }
 
-function deleteLink(key) {
+async function deleteLink(key) {
     if (!isAuthenticated) return showMessage('Auth required', 'error');
     if (!confirm(`Delete ${key}?`)) return;
-    document.querySelector(`input[data-key="${key}"]`).value = '';
-    const links = JSON.parse(localStorage.getItem('navLinks') || '{}');
-    delete links[key];
-    localStorage.setItem('navLinks', JSON.stringify(links));
-    showMessage(`✓ ${key} deleted!`, 'success');
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { error } = await supabaseClient
+            .from('navigation_links')
+            .delete()
+            .eq('key', key)
+            .eq('user_id', user.id);
+        
+        if (error) throw error;
+        document.querySelector(`input[data-key="${key}"]`).value = '';
+        showMessage(`✓ ${key} deleted!`, 'success');
+    } catch (error) {
+        console.error('Error deleting link:', error);
+        showMessage('Failed to delete link', 'error');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
