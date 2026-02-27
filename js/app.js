@@ -122,8 +122,8 @@ function initCalendar() {
                 fontSize      = '9px';
                 timeFontSize  = '8px';
                 badgeFontSize = '7px';
-                padding       = '5px 6px';
-                showTime      = false; // keep month cards clean
+                padding       = '3px 4px';
+                showTime      = !!post.time;
             } else if (isWeek) {
                 fontSize      = '9px';
                 timeFontSize  = '8px';
@@ -167,9 +167,8 @@ function initCalendar() {
                         font-weight: 600;
                         line-height: 1.2;
                         color: #e8d5ff;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
+                        white-space: normal;
+                        word-break: break-word;
                     ">${post.title || 'Untitled'}</div>`;
 
             if (showTime) {
@@ -178,7 +177,7 @@ function initCalendar() {
                         font-size: ${timeFontSize};
                         color: rgba(232, 213, 255, 0.8);
                         line-height: 1.2;
-                    ">🕐 ${post.displayTime || post.time}</div>`;
+                    ">🕐 ${post.time}</div>`;
             }
 
             html += `
@@ -248,33 +247,10 @@ async function loadPosts() {
             dateOnly = dateOnly.split('T')[0];
         }
 
-        let startDateTime  = dateOnly;
-        let displayTime    = post.scheduled_time || null;
-
+        // Build start — use exact stored time, no offset
+        let startDateTime = dateOnly;
         if (post.scheduled_time) {
-            const timeKey = `${dateOnly}_${post.scheduled_time}`;
-
-            // Initialise counter for this slot
-            if (timeUsage[timeKey] === undefined) timeUsage[timeKey] = 0;
-
-            // Offset each extra event by 3 minutes so FullCalendar treats them
-            // as distinct time slots and places them side-by-side in day/week view
-            const offsetMinutes = timeUsage[timeKey] * 3;
-            timeUsage[timeKey]++;
-
-            if (offsetMinutes > 0) {
-                const [h, m, s = 0] = post.scheduled_time.split(':').map(Number);
-                const total   = h * 60 + m + offsetMinutes;
-                const newH    = Math.floor(total / 60);
-                const newM    = total % 60;
-                const padded  = (n) => String(n).padStart(2, '0');
-                const offsetTime = `${padded(newH)}:${padded(newM)}:${padded(s)}`;
-                startDateTime = `${dateOnly}T${offsetTime}`;
-                // Keep the label showing the ORIGINAL time
-                displayTime = post.scheduled_time;
-            } else {
-                startDateTime = `${dateOnly}T${post.scheduled_time}`;
-            }
+            startDateTime = `${dateOnly}T${post.scheduled_time}`;
         }
 
         console.log('➕ Adding event:', {
@@ -291,11 +267,10 @@ async function loadPosts() {
             backgroundColor: platform.color,
             borderColor: platform.color,
             extendedProps: {
-                platform:    post.platform,
-                title:       post.title,
-                content:     post.content,
-                time:        post.scheduled_time,
-                displayTime: displayTime  // always shows original time in the card
+                platform: post.platform,
+                title:    post.title,
+                content:  post.content,
+                time:     post.scheduled_time
             }
         });
     });
@@ -350,8 +325,8 @@ async function openEditPostModal(postId) {
 }
 
 function closePostModal() {
-    document.getElementById('postModal').style.display = 'none';
-    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('postModal').classList.remove('active');
+    document.getElementById('postModal').style.display = '';
 }
 
 async function handleImageUrlInput(event) {
