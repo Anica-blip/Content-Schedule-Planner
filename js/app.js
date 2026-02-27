@@ -119,9 +119,12 @@ function initCalendar() {
             openEditPostModal(info.event.id);
         },
         eventDrop: async function(info) {
-            const postId = info.event.id;
-            const newDate = info.event.startStr.split('T')[0];
-            await updatePostDate(postId, newDate);
+            const postId  = info.event.id;
+            const startStr = info.event.startStr; // e.g. "2025-01-15T14:30:00"
+            const newDate  = startStr.split('T')[0];
+            // Extract time if present (week/day view drag gives a full datetime)
+            const newTime  = startStr.includes('T') ? startStr.split('T')[1].substring(0, 5) : null;
+            await updatePostDateTime(postId, newDate, newTime);
         },
         eventContent: function(arg) {
             const post = arg.event.extendedProps;
@@ -358,7 +361,9 @@ async function openEditPostModal(postId) {
     document.getElementById('platform').value      = post.platform       || '';
     document.getElementById('title').value         = post.title          || '';
     document.getElementById('content').value       = post.content        || '';
-    document.getElementById('scheduledDate').value = post.scheduled_date || '';
+    // Normalise date — Supabase may return "2025-01-15T00:00:00.000Z", input needs "YYYY-MM-DD"
+    const rawDate = post.scheduled_date || '';
+    document.getElementById('scheduledDate').value = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
     document.getElementById('scheduledTime').value = post.scheduled_time || '';
     
     document.getElementById('postModal').classList.add('active');
@@ -449,14 +454,20 @@ async function handleDeletePost() {
     }
 }
 
-async function updatePostDate(postId, newDate) {
+async function updatePostDateTime(postId, newDate, newTime) {
+    // Build update payload — always save date; only overwrite time if the drag gave us one
+    const update = { scheduled_date: newDate };
+    if (newTime) update.scheduled_time = newTime;
+
     if (supabaseAPI.initialized) {
-        await supabaseAPI.updatePost(postId, { scheduled_date: newDate });
+        await supabaseAPI.updatePost(postId, update);
     } else {
         let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-        posts = posts.map(p => p.id === postId ? { ...p, scheduled_date: newDate } : p);
+        posts = posts.map(p => p.id === postId ? { ...p, ...update } : p);
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
     }
+    // Reload so the card display time reflects the new position
+    await loadPosts();
 }
 
 window.addEventListener('load', initApp);
