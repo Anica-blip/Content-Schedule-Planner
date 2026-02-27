@@ -1,8 +1,8 @@
 # 3C Content Schedule Planner
 
 **Built by:** Chef Anica-blip for 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.6 (Anthropic)  
-**Live URL:** https://planner.3c-public-library.org
+**AI Assistant:** Claude Sonnet 4.5 (Anthropic)  
+**Live URL:** (https://anica-blip.github.io/Content-Schedule-Planner/index.html)
 
 A modern social media content calendar for scheduling posts across multiple platforms with Cloudflare R2 image storage and Supabase database.
 
@@ -12,7 +12,6 @@ A modern social media content calendar for scheduling posts across multiple plat
 
 - 📅 **Interactive Calendar** - FullCalendar.js integration with month/week views
 - ✏️ **Post Management** - Create, edit, delete, and schedule social media posts
-- 🖼️ **Image Uploads** - Cloudflare R2 storage for post images
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
 - 🎨 **Dark Purple Theme** - Custom 3C branding with gradient backgrounds
 - 🗄️ **Supabase Database** - PostgreSQL with Row Level Security
@@ -30,13 +29,6 @@ A modern social media content calendar for scheduling posts across multiple plat
 
 ### **Backend**
 - Supabase (PostgreSQL with Row Level Security)
-- Cloudflare R2 (Object storage for images)
-- Cloudflare Workers (Serverless API)
-
-### **Infrastructure**
-- Cloudflare Pages (Static hosting with global CDN)
-- Custom Domain: `planner.3c-public-library.org`
-- Worker Route: `planner.3c-public-library.org/*`
 
 ---
 
@@ -66,35 +58,9 @@ Content-Schedule-Planner/
 ├── public/
 │   ├── logo.png           # 3C logo
 │   └── favicon.png        # Site favicon
-├── _worker.js             # Cloudflare Worker for R2 uploads
-├── wrangler.toml          # Cloudflare configuration
 ├── package.json           # Dependencies
 └── README.md              # This file
 ```
-
----
-
-## ⚙️ Cloudflare Configuration
-
-### **Page Subdomain**
-- **URL:** https://planner.3c-public-library.org
-- **Alternate:** www.planner.3c-public-library.org (Active)
-
-### **Worker Route**
-- **Route:** `planner.3c-public-library.org/*`
-- **Purpose:** Connects Worker to subdomain for R2 uploads
-
-### **R2 Bucket**
-- **Bucket Name:** `schedule-planner`
-- **Binding:** `R2_BUCKET`
-- **Public URL:** `https://planner.3c-public-library.org`
-
-### **Environment Variables**
-Set in Cloudflare Dashboard → Workers → Settings → Variables:
-- `R2_PUBLIC_URL` - Public URL for R2 objects
-- `SUPABASE_URL` - Supabase project URL
-- `SUPABASE_ANON_KEY` - Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (admin)
 
 ---
 
@@ -140,49 +106,14 @@ Stores scheduled social media posts.
 
 ---
 
-## 🛠️ Development
-
-### **Local Development**
-```bash
-# Install dependencies
-npm install
-
-# Run local development server
-npm run dev
-
-# Deploy to Cloudflare
-npm run deploy
-```
-
-### **Manual Deployment**
-```bash
-# Deploy via Wrangler CLI
-npx wrangler pages deploy . --project-name=content-schedule-planner
-```
-
----
-
 ## 📝 Usage
 
 1. **Create Post** - Click "New Post" button or select date on calendar
 2. **Select Platform** - Choose from 8 supported platforms
 3. **Add Content** - Write post content and add hashtags
-4. **Upload Image** - Optional image upload to Cloudflare R2
-5. **Schedule** - Set date and time for posting
-6. **Save** - Post appears on calendar
-7. **Edit/Delete** - Click post on calendar to modify or remove
-
----
-
-## 🌐 Domain Structure
-
-**Main Domain:** `3c-public-library.org`
-- `/admin` - Admin panel
-- `/library.html` - Library page
-
-**Subdomains:**
-- `builder.3c-public-library.org` - Interactive PDF builder
-- `planner.3c-public-library.org` - Content Schedule Planner (this project)
+4. **Schedule** - Set date and time for posting
+5. **Save** - Post appears on calendar
+6. **Edit/Delete** - Click post on calendar to modify or remove
 
 ---
 
@@ -206,8 +137,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Email:** 3c.innertherapy@gmail.com  
 **GitHub:** https://github.com/Anica-blip/Content-Schedule-Planner  
-**Website:** https://3c-public-library.org  
-
 ---
 
 **Built with 💎 by 3C Thread To Success**  
