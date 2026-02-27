@@ -153,15 +153,6 @@
     <script src="js/app.js?v=1.1.3"></script>
     <script src="js/navigation.js?v=1.0.3"></script>
     <script>
-        // ── Session guard — redirect to login if no valid session ──────────────
-        (async function checkAuth() {
-            const { data: { session } } = await supabaseAPI.client.auth.getSession();
-            if (!session) {
-                console.warn('⚠️ No session — redirecting to login');
-                window.location.href = 'login.html';
-            }
-        })();
-
         // ── Sign out — wired to 🚪 button in header ────────────────────────────
         async function signOut() {
             try {
