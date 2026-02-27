@@ -8,6 +8,18 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="icon" type="image/png" href="public/favicon.png">
+    <!-- Hard cache bust — forces fresh asset load once per browser session -->
+    <script>
+        (function() {
+            var key = '3c_cache_busted';
+            if (!sessionStorage.getItem(key)) {
+                sessionStorage.setItem(key, '1');
+                var url = new URL(window.location.href);
+                url.searchParams.set('_v', Date.now());
+                window.location.replace(url.toString());
+            }
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <link rel="stylesheet" href="css/styles.css?v=1.1.4">
@@ -138,7 +150,7 @@
 
 
     <script src="js/supabaseAPI.js?v=1.1.2"></script>
-    <script src="js/app.js?v=1.1.2"></script>
+    <script src="js/app.js?v=1.1.3"></script>
     <script src="js/navigation.js?v=1.0.3"></script>
 </body>
 </html>
