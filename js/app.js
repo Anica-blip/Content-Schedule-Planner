@@ -60,10 +60,6 @@ function injectCalendarStyles() {
             padding: 0 !important;
             overflow: visible !important;
         }
-        /* Slot height — comfortable but not oversized */
-        .fc-timegrid-slot {
-            height: 3em !important;
-        }
         /* Ensure overlapping events split width evenly and stay readable */
         .fc-timegrid-event-harness {
             overflow: visible !important;
@@ -100,13 +96,21 @@ function initCalendar() {
         editable: true,
         selectable: true,
         height: 'auto',
-        defaultTimedEventDuration: '01:00',
+        initialDate: new Date(),
+        nowIndicator: true,
+        defaultTimedEventDuration: '00:30',
         eventMaxStack: 10,
         dayMaxEventRows: false,
         eventOrder: 'start',
-        eventOverlap: true,
+        eventOverlap: false,
         displayEventTime: true,
         slotEventOverlap: false,
+        viewDidMount: function(info) {
+            // When switching to day view, always jump to today
+            if (info.view.type === 'timeGridDay') {
+                calendar.today();
+            }
+        },
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
