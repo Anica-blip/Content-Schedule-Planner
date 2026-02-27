@@ -106,7 +106,7 @@ function initCalendar() {
         eventOrder: 'start',
         eventOverlap: true,
         displayEventTime: true,
-        slotEventOverlap: true,
+        slotEventOverlap: false,
         select: function(info) {
             openCreatePostModal(info.startStr);
         },
