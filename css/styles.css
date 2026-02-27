@@ -79,35 +79,30 @@ body {
 .fc-button { background: var(--light-purple) !important; border: none !important; }
 .fc-day-today { background: rgba(155, 89, 182, 0.15) !important; }
 
-/* Force side-by-side layout for events at same time */
+/* Force side-by-side layout for events at same time in day/week view */
 .fc-timegrid-col-events {
-    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
 }
 
 .fc-timegrid-event-harness {
-    position: absolute !important;
+    position: relative !important;
+    flex: 1 1 48% !important;
+    max-width: 48% !important;
+    min-width: 48% !important;
 }
 
-.fc-timegrid-event-harness:nth-child(1) {
-    left: 0% !important;
-    width: 48% !important;
+/* Month view - compact events */
+.fc-daygrid-event {
+    margin: 1px 0 !important;
+    padding: 2px !important;
 }
 
-.fc-timegrid-event-harness:nth-child(2) {
-    left: 52% !important;
-    width: 48% !important;
-}
-
-.fc-timegrid-event-harness:nth-child(3) {
-    left: 0% !important;
-    top: 55px !important;
-    width: 48% !important;
-}
-
-.fc-timegrid-event-harness:nth-child(4) {
-    left: 52% !important;
-    top: 55px !important;
-    width: 48% !important;
+.fc-daygrid-event-harness {
+    margin: 1px 0 !important;
 }
 
 .modal {

@@ -71,21 +71,22 @@ function initCalendar() {
             const view = calendar.view.type;
             const isMonthView = view === 'dayGridMonth';
             
-            const fontSize = isMonthView ? '10px' : '8px';
-            const timeFontSize = isMonthView ? '9px' : '7px';
-            const badgeFontSize = isMonthView ? '8px' : '7px';
-            const padding = isMonthView ? '6px' : '4px';
+            const fontSize = isMonthView ? '9px' : '10px';
+            const timeFontSize = isMonthView ? '8px' : '9px';
+            const badgeFontSize = isMonthView ? '7px' : '8px';
+            const padding = isMonthView ? '4px' : '6px';
             
-            let html = '<div style="display:flex; flex-direction:column; gap:3px; padding:' + padding + '; width:100%; height:100%; overflow:hidden; background:rgba(75, 85, 180, 0.85); border-radius:6px; box-sizing:border-box; border-left:3px solid ' + platform.color + ';">';
+            let html = '<div style="display:flex; flex-direction:column; gap:2px; padding:' + padding + '; width:100%; height:auto; overflow:visible; background:rgba(75, 85, 180, 0.15); border-radius:6px; box-sizing:border-box; border-left:3px solid ' + platform.color + ';">';
             
-            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.3; color:#ffffff; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">' + (post.title || 'Untitled') + '</div>';
+            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.2; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (post.title || 'Untitled') + '</div>';
             
-            html += '<div style="display:flex; gap:4px; align-items:center;">';
             if (post.time) {
-                html += '<span style="font-size:' + timeFontSize + '; color:rgba(255,255,255,0.9);">🕐 ' + post.time + '</span>';
+                html += '<div style="font-size:' + timeFontSize + '; color:rgba(255,255,255,0.9); line-height:1.2;">🕐 ' + post.time + '</div>';
             }
-            html += '<span style="background:' + platform.color + '; color:#fff; padding:1px 4px; border-radius:3px; font-size:' + badgeFontSize + '; font-weight:600; white-space:nowrap;">' + platform.abbr + '</span>';
-            html += '</div></div>';
+            
+            html += '<div style="display:inline-block; width:fit-content;"><span style="background:' + platform.color + '; color:#fff; padding:2px 6px; border-radius:3px; font-size:' + badgeFontSize + '; font-weight:600; white-space:nowrap; display:inline-block;">' + platform.abbr + '</span></div>';
+            
+            html += '</div>';
             
             return { html: html };
         }
