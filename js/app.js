@@ -40,19 +40,36 @@ function injectCalendarStyles() {
     const style = document.createElement('style');
     style.id = '3c-calendar-styles';
     style.textContent = `
-        /* ── WEEK VIEW: compact, side-by-side handled by FullCalendar natively ─ */
+        /* ── WEEK VIEW: compact columns, flexible row height ─────────────────── */
         .fc-timegrid-event {
             border-radius: 6px !important;
-            min-height: 24px !important;
+            min-height: 20px !important;
             overflow: visible !important;
         }
         .fc-timegrid-event .fc-event-main {
             padding: 0 !important;
+            overflow: visible !important;
+        }
+        /* Allow day columns to shrink and flex */
+        .fc-timegrid-col {
+            min-width: 0 !important;
+        }
+        /* Tighter row height so containers sit snug */
+        .fc-timegrid-slot {
+            height: 2.5em !important;
         }
 
-        /* ── DAY VIEW: same as week timegrid ──────────────────────────────── */
-        .fc-timegrid-col-events {
-            margin: 0 1px !important;
+        /* ── DAY/WEEK VIEW: equal width side-by-side for overlapping events ──── */
+        /* When FC overlaps events it sets inset-inline-start/end on the harness.
+           Ensure each harness can shrink to fit and doesn't force full width.   */
+        .fc-timegrid-event-harness {
+            min-width: 0 !important;
+            overflow: visible !important;
+        }
+        /* The inner event must fill its harness but not overflow it */
+        .fc-timegrid-event-harness > .fc-timegrid-event {
+            width: 100% !important;
+            min-width: 0 !important;
         }
 
         /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
@@ -86,6 +103,9 @@ function initCalendar() {
         editable: true,
         selectable: true,
         height: 'auto',
+        expandRows: true,
+        defaultTimedEventDuration: '00:30',
+        forceEventDuration: true,
         eventMaxStack: 10,
         dayMaxEventRows: false,
         eventOrder: 'start',
