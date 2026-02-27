@@ -102,7 +102,7 @@ function initCalendar() {
         eventMaxStack: 10,
         dayMaxEventRows: false,
         eventOrder: 'start',
-        eventOverlap: false,
+        eventOverlap: true,
         displayEventTime: true,
         slotEventOverlap: false,
         viewDidMount: function(info) {
