@@ -147,6 +147,11 @@ class SupabaseAPI {
 
     async getCurrentUser() {
         if (!this.initialized) await this.init();
+        // getSession() reads from localStorage instantly — available on page load
+        // without waiting for a network round-trip like getUser() requires
+        const { data: { session } } = await this.client.auth.getSession();
+        if (session?.user) return session.user;
+        // Fallback: if no local session, try network call (e.g. after OAuth redirect)
         const { data: { user } } = await this.client.auth.getUser();
         return user;
     }
