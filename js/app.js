@@ -218,7 +218,7 @@ function closePostModal() {
     document.getElementById('imagePreview').style.display = 'none';
 }
 
-function handleImageUrlInput(event) {
+async function handleImageUrlInput(event) {
     const postId = document.getElementById('postId').value;
     const platform = document.getElementById('platform').value;
     const title = document.getElementById('title').value;
