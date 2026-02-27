@@ -1,10 +1,10 @@
 # 3C Content Schedule Planner
 
 **Built by:** Chef Anica-blip for 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.5 (Anthropic)  
+**AI Assistant:** Claude Sonnet 4.6 (Anthropic)  
 **Live URL:** (https://anica-blip.github.io/Content-Schedule-Planner/index.html)
 
-A modern social media content calendar for scheduling posts across multiple platforms with Cloudflare R2 image storage and Supabase database.
+A modern social media content calendar for scheduling posts across multiple platforms with Supabase database and GitHub Pages hosting.
 
 ---
 
@@ -100,9 +100,8 @@ Stores scheduled social media posts.
 
 - **Row Level Security (RLS)** enabled on all tables
 - Users can only view/edit their own posts
-- Environment variables managed in Cloudflare Dashboard
+- Environment variables managed via GitHub repository settings
 - Secrets never committed to Git
-- CORS properly configured in Worker
 
 ---
 
@@ -126,9 +125,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Credits
 
 **Created by:** Chef Anica-blip  
-**Organization:** 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.5 by Anthropic  
-**Infrastructure:** Cloudflare Pages, Supabase  
+**Organisation:** 3C Thread To Success  
+**AI Assistant:** Claude Sonnet 4.6 by Anthropic  
+**Infrastructure:** GitHub Pages, Supabase  
 **Calendar Library:** FullCalendar.js  
 
 ---
@@ -140,4 +139,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Built with 💎 by 3C Thread To Success**  
-**Powered by Claude Sonnet 4.5 (Anthropic)**
+**Powered by Claude Sonnet 4.6 (Anthropic)**
