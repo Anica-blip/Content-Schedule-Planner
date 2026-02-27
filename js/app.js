@@ -28,6 +28,16 @@ async function initApp() {
     if (!supabaseInit) {
         console.warn('⚠️ Supabase not configured, using localStorage fallback');
     }
+
+    // ── Session guard — runs after client is ready ─────────────────────────
+    if (supabaseAPI.client) {
+        const { data: { session } } = await supabaseAPI.client.auth.getSession();
+        if (!session) {
+            console.warn('⚠️ No session — redirecting to login');
+            window.location.href = 'login.html';
+            return;
+        }
+    }
     
     injectCalendarStyles();
     initCalendar();
@@ -40,7 +50,7 @@ function injectCalendarStyles() {
     const style = document.createElement('style');
     style.id = '3c-calendar-styles';
     style.textContent = `
-        /* ── WEEK VIEW: compact columns, flexible row height ─────────────────── */
+        /* ── WEEK/DAY VIEW: natural column sizing, compact cards ─────────────── */
         .fc-timegrid-event {
             border-radius: 6px !important;
             min-height: 20px !important;
@@ -50,26 +60,13 @@ function injectCalendarStyles() {
             padding: 0 !important;
             overflow: visible !important;
         }
-        /* Allow day columns to shrink and flex */
-        .fc-timegrid-col {
-            min-width: 0 !important;
-        }
-        /* Tighter row height so containers sit snug */
+        /* Slot height — comfortable but not oversized */
         .fc-timegrid-slot {
-            height: 2.5em !important;
+            height: 3em !important;
         }
-
-        /* ── DAY/WEEK VIEW: equal width side-by-side for overlapping events ──── */
-        /* When FC overlaps events it sets inset-inline-start/end on the harness.
-           Ensure each harness can shrink to fit and doesn't force full width.   */
+        /* Ensure overlapping events split width evenly and stay readable */
         .fc-timegrid-event-harness {
-            min-width: 0 !important;
             overflow: visible !important;
-        }
-        /* The inner event must fill its harness but not overflow it */
-        .fc-timegrid-event-harness > .fc-timegrid-event {
-            width: 100% !important;
-            min-width: 0 !important;
         }
 
         /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
@@ -103,9 +100,7 @@ function initCalendar() {
         editable: true,
         selectable: true,
         height: 'auto',
-        expandRows: true,
-        defaultTimedEventDuration: '00:30',
-        forceEventDuration: true,
+        defaultTimedEventDuration: '01:00',
         eventMaxStack: 10,
         dayMaxEventRows: false,
         eventOrder: 'start',
