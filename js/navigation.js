@@ -48,7 +48,7 @@ function loadNavLinks() {
         'chatroom': 2,
         'ai': 3,
         'supabase': 4,
-        'cloudflare': 5,
+        'railway': 5,
         'password': 6,
         'mobile': 7,
         'dashboard': 8
