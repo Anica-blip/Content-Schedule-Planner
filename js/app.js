@@ -11,9 +11,9 @@ const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
     facebook: { name: 'Facebook', abbr: 'FB', icon: '📘', color: '#1877f2' },
     linkedin: { name: 'LinkedIn', abbr: 'LK', icon: '💼', color: '#0077b5' },
-    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '��', color: '#1da1f2' },
+    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
     youtube: { name: 'YouTube', abbr: 'YT', icon: '📺', color: '#ff0000' },
-    tiktok: { name: 'TikTok', abbr: 'TK', icon: '��', color: '#000000' },
+    tiktok: { name: 'TikTok', abbr: 'TK', icon: '🎵', color: '#000000' },
     telegram: { name: 'Telegram', abbr: 'TG', icon: '✈️', color: '#0088cc' },
     pinterest: { name: 'Pinterest', abbr: 'PI', icon: '📌', color: '#bd081c' },
     whatsapp: { name: 'WhatsApp Business', abbr: 'WB', icon: '💬', color: '#25d366' },
@@ -29,9 +29,67 @@ async function initApp() {
         console.warn('⚠️ Supabase not configured, using localStorage fallback');
     }
     
+    injectCalendarStyles();
     initCalendar();
     await loadPosts();
     console.log('✅ App initialized');
+}
+
+// ─── Injected CSS for modern calendar event styling ───────────────────────────
+function injectCalendarStyles() {
+    const style = document.createElement('style');
+    style.id = '3c-calendar-styles';
+    style.textContent = `
+        /* ── MONTH VIEW: 2 events per row inside each day cell ─────────────── */
+        .fc-daygrid-day-events {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 3px !important;
+            padding: 2px 3px !important;
+            align-items: flex-start !important;
+        }
+        .fc-daygrid-event-harness {
+            width: calc(50% - 2px) !important;
+            flex: 0 0 calc(50% - 2px) !important;
+            position: relative !important;
+            margin: 0 !important;
+        }
+        /* Keep "more" link full width */
+        .fc-daygrid-more-link {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        /* ── WEEK VIEW: compact, side-by-side handled by FullCalendar natively ─ */
+        .fc-timegrid-event {
+            border-radius: 6px !important;
+            min-height: 24px !important;
+            overflow: visible !important;
+        }
+        .fc-timegrid-event .fc-event-main {
+            padding: 0 !important;
+        }
+
+        /* ── DAY VIEW: same as week timegrid ──────────────────────────────── */
+        .fc-timegrid-col-events {
+            margin: 0 1px !important;
+        }
+
+        /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
+        .fc-event {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .fc-event-main {
+            overflow: visible !important;
+        }
+        .fc-daygrid-event {
+            white-space: normal !important;
+            overflow: visible !important;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 function initCalendar() {
@@ -48,7 +106,7 @@ function initCalendar() {
         editable: true,
         selectable: true,
         height: 'auto',
-        eventMaxStack: 3,
+        eventMaxStack: 10,
         dayMaxEventRows: false,
         eventOrder: 'start',
         eventOverlap: true,
@@ -69,26 +127,94 @@ function initCalendar() {
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             const view = calendar.view.type;
-            const isMonthView = view === 'dayGridMonth';
-            
-            const fontSize = isMonthView ? '9px' : '10px';
-            const timeFontSize = isMonthView ? '8px' : '9px';
-            const badgeFontSize = isMonthView ? '7px' : '8px';
-            const padding = isMonthView ? '4px' : '6px';
-            
-            let html = '<div style="display:flex; flex-direction:column; gap:2px; padding:' + padding + '; width:100%; height:auto; overflow:visible; background:rgba(75, 85, 180, 0.15); border-radius:6px; box-sizing:border-box; border-left:3px solid ' + platform.color + ';">';
-            
-            html += '<div style="font-size:' + fontSize + '; font-weight:600; line-height:1.2; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (post.title || 'Untitled') + '</div>';
-            
-            if (post.time) {
-                html += '<div style="font-size:' + timeFontSize + '; color:rgba(255,255,255,0.9); line-height:1.2;">🕐 ' + post.time + '</div>';
+
+            // ── Per-view sizing ────────────────────────────────────────────────
+            const isMonth = view === 'dayGridMonth';
+            const isWeek  = view === 'timeGridWeek';
+            const isDay   = view === 'timeGridDay';
+
+            let fontSize, timeFontSize, badgeFontSize, padding, showTime;
+
+            if (isMonth) {
+                fontSize      = '9px';
+                timeFontSize  = '8px';
+                badgeFontSize = '7px';
+                padding       = '5px 6px';
+                showTime      = false; // keep month cards clean
+            } else if (isWeek) {
+                fontSize      = '9px';
+                timeFontSize  = '8px';
+                badgeFontSize = '7px';
+                padding       = '3px 4px';
+                showTime      = !!post.time;
+            } else {
+                // Day view
+                fontSize      = '10px';
+                timeFontSize  = '9px';
+                badgeFontSize = '8px';
+                padding       = '4px 6px';
+                showTime      = !!post.time;
             }
-            
-            html += '<div style="display:inline-block; width:fit-content;"><span style="background:' + platform.color + '; color:#fff; padding:2px 6px; border-radius:3px; font-size:' + badgeFontSize + '; font-weight:600; white-space:nowrap; display:inline-block;">' + platform.abbr + '</span></div>';
-            
-            html += '</div>';
-            
-            return { html: html };
+
+            // ── Dark purple transparent glassmorphism card ─────────────────────
+            // #2d1b4e = rgb(45,27,78) — matches the app's "Medium Purple (Cards)"
+            const bg = 'rgba(45, 27, 78, 0.72)';
+            const leftBorder = platform.color;
+
+            let html = `
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    padding: ${padding};
+                    width: 100%;
+                    height: auto;
+                    box-sizing: border-box;
+                    background: ${bg};
+                    backdrop-filter: blur(6px);
+                    -webkit-backdrop-filter: blur(6px);
+                    border-radius: 6px;
+                    border-left: 3px solid ${leftBorder};
+                    border: 1px solid rgba(155, 89, 182, 0.25);
+                    border-left: 3px solid ${leftBorder};
+                    overflow: visible;
+                ">
+                    <div style="
+                        font-size: ${fontSize};
+                        font-weight: 600;
+                        line-height: 1.2;
+                        color: #e8d5ff;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    ">${post.title || 'Untitled'}</div>`;
+
+            if (showTime) {
+                html += `
+                    <div style="
+                        font-size: ${timeFontSize};
+                        color: rgba(232, 213, 255, 0.8);
+                        line-height: 1.2;
+                    ">🕐 ${post.displayTime || post.time}</div>`;
+            }
+
+            html += `
+                    <div style="display: inline-block; width: fit-content; margin-top: 1px;">
+                        <span style="
+                            background: ${platform.color};
+                            color: #fff;
+                            padding: 1px 5px;
+                            border-radius: 3px;
+                            font-size: ${badgeFontSize};
+                            font-weight: 700;
+                            letter-spacing: 0.5px;
+                            white-space: nowrap;
+                            display: inline-block;
+                        ">${platform.abbr}</span>
+                    </div>
+                </div>`;
+
+            return { html };
         }
     });
     calendar.render();
@@ -103,9 +229,7 @@ async function loadPosts() {
         console.log('✅ Supabase initialized, fetching from database');
         const currentDate = calendar.getDate();
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-        
-        console.log('📆 Date range:', startOfMonth.toISOString().split('T')[0], 'to', endOfMonth.toISOString().split('T')[0]);
+        const endOfMonth   = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         
         posts = await supabaseAPI.getPosts(
             startOfMonth.toISOString().split('T')[0],
@@ -114,7 +238,6 @@ async function loadPosts() {
         console.log('📊 Fetched', posts.length, 'posts from Supabase:', posts);
     } else {
         console.log('⚠️ Supabase not initialized, using localStorage');
-        // Fallback to localStorage
         posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
         console.log('📊 Loaded', posts.length, 'posts from localStorage:', posts);
     }
@@ -126,41 +249,70 @@ async function loadPosts() {
         console.warn('⚠️ No posts to display');
         return;
     }
-    
+
+    // ── Day-view same-time stacking fix ────────────────────────────────────────
+    // Track how many events share the same date + time slot.
+    // Each duplicate gets +3 min offset so FullCalendar renders them side-by-side
+    // rather than stacked. This is DISPLAY ONLY — stored data is never touched.
+    const timeUsage = {}; // key: "YYYY-MM-DD_HH:MM" → count of events seen so far
+
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
-        
-        // Create datetime for proper sorting
-        // Extract just the date part (YYYY-MM-DD) from scheduled_date
+
+        // Normalise the date
         let dateOnly = post.scheduled_date;
-        if (dateOnly.includes('T')) {
+        if (dateOnly && dateOnly.includes('T')) {
             dateOnly = dateOnly.split('T')[0];
         }
-        
-        // Build proper ISO datetime
-        let startDateTime = dateOnly;
+
+        let startDateTime  = dateOnly;
+        let displayTime    = post.scheduled_time || null;
+
         if (post.scheduled_time) {
-            startDateTime = dateOnly + 'T' + post.scheduled_time;
+            const timeKey = `${dateOnly}_${post.scheduled_time}`;
+
+            // Initialise counter for this slot
+            if (timeUsage[timeKey] === undefined) timeUsage[timeKey] = 0;
+
+            // Offset each extra event by 3 minutes so FullCalendar treats them
+            // as distinct time slots and places them side-by-side in day/week view
+            const offsetMinutes = timeUsage[timeKey] * 3;
+            timeUsage[timeKey]++;
+
+            if (offsetMinutes > 0) {
+                const [h, m, s = 0] = post.scheduled_time.split(':').map(Number);
+                const total   = h * 60 + m + offsetMinutes;
+                const newH    = Math.floor(total / 60);
+                const newM    = total % 60;
+                const padded  = (n) => String(n).padStart(2, '0');
+                const offsetTime = `${padded(newH)}:${padded(newM)}:${padded(s)}`;
+                startDateTime = `${dateOnly}T${offsetTime}`;
+                // Keep the label showing the ORIGINAL time
+                displayTime = post.scheduled_time;
+            } else {
+                startDateTime = `${dateOnly}T${post.scheduled_time}`;
+            }
         }
-        
+
         console.log('➕ Adding event:', {
             id: post.id,
             title: post.title,
-            date: startDateTime,
-            platform: post.platform,
+            start: startDateTime,
+            platform: post.platform
         });
-        
+
         calendar.addEvent({
             id: post.id,
-            title: post.title || post.content?.substring(0, 30) + '...',
+            title: post.title || (post.content?.substring(0, 30) + '...'),
             start: startDateTime,
             backgroundColor: platform.color,
             borderColor: platform.color,
             extendedProps: {
-                platform: post.platform,
-                title: post.title,
-                content: post.content,
-                time: post.scheduled_time,
+                platform:    post.platform,
+                title:       post.title,
+                content:     post.content,
+                time:        post.scheduled_time,
+                displayTime: displayTime  // always shows original time in the card
             }
         });
     });
@@ -186,11 +338,9 @@ function openCreatePostModal(date = null) {
 async function openEditPostModal(postId) {
     let post = null;
     
-    // Try Supabase first
     if (supabaseAPI.initialized) {
         post = await supabaseAPI.getPost(postId);
     } else {
-        // Fallback to localStorage
         const posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
         post = posts.find(p => p.id === postId);
     }
@@ -205,9 +355,9 @@ async function openEditPostModal(postId) {
     document.getElementById('postId').value = post.id;
     document.getElementById('deleteBtn').style.display = 'block';
     
-    document.getElementById('platform').value = post.platform || '';
-    document.getElementById('title').value = post.title || '';
-    document.getElementById('content').value = post.content || '';
+    document.getElementById('platform').value      = post.platform       || '';
+    document.getElementById('title').value         = post.title          || '';
+    document.getElementById('content').value       = post.content        || '';
     document.getElementById('scheduledDate').value = post.scheduled_date || '';
     document.getElementById('scheduledTime').value = post.scheduled_time || '';
     
@@ -220,13 +370,12 @@ function closePostModal() {
 }
 
 async function handleImageUrlInput(event) {
-    const postId = document.getElementById('postId').value;
-    const platform = document.getElementById('platform').value;
-    const title = document.getElementById('title').value;
-    const content = document.getElementById('content').value;
+    const postId        = document.getElementById('postId').value;
+    const platform      = document.getElementById('platform').value;
+    const title         = document.getElementById('title').value;
+    const content       = document.getElementById('content').value;
     const scheduledDate = document.getElementById('scheduledDate').value;
     const scheduledTime = document.getElementById('scheduledTime').value;
-    
     
     const postData = {
         platform,
@@ -239,7 +388,6 @@ async function handleImageUrlInput(event) {
     
     let result;
     
-    // Try Supabase first
     if (supabaseAPI.initialized) {
         if (postId) {
             result = await supabaseAPI.updatePost(postId, postData);
@@ -255,8 +403,7 @@ async function handleImageUrlInput(event) {
             alert('Failed to save post: ' + result.error);
         }
     } else {
-        // Fallback to localStorage
-        postData.id = postId || 'post_' + Date.now();
+        postData.id         = postId || 'post_' + Date.now();
         postData.created_at = currentPost?.created_at || new Date().toISOString();
         
         let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
@@ -281,7 +428,6 @@ async function handleDeletePost() {
     
     let result;
     
-    // Try Supabase first
     if (supabaseAPI.initialized) {
         result = await supabaseAPI.deletePost(currentPost.id);
         
@@ -293,7 +439,6 @@ async function handleDeletePost() {
             alert('Failed to delete post');
         }
     } else {
-        // Fallback to localStorage
         let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
         posts = posts.filter(p => p.id !== currentPost.id);
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
@@ -305,11 +450,9 @@ async function handleDeletePost() {
 }
 
 async function updatePostDate(postId, newDate) {
-    // Try Supabase first
     if (supabaseAPI.initialized) {
         await supabaseAPI.updatePost(postId, { scheduled_date: newDate });
     } else {
-        // Fallback to localStorage
         let posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
         posts = posts.map(p => p.id === postId ? { ...p, scheduled_date: newDate } : p);
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
