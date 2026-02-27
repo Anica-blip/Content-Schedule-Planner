@@ -40,26 +40,6 @@ function injectCalendarStyles() {
     const style = document.createElement('style');
     style.id = '3c-calendar-styles';
     style.textContent = `
-        /* ── MONTH VIEW: 2 events per row inside each day cell ─────────────── */
-        .fc-daygrid-day-events {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 3px !important;
-            padding: 2px 3px !important;
-            align-items: flex-start !important;
-        }
-        .fc-daygrid-event-harness {
-            width: calc(50% - 2px) !important;
-            flex: 0 0 calc(50% - 2px) !important;
-            position: relative !important;
-            margin: 0 !important;
-        }
-        /* Keep "more" link full width */
-        .fc-daygrid-more-link {
-            width: 100% !important;
-            flex: 0 0 100% !important;
-        }
-
         /* ── WEEK VIEW: compact, side-by-side handled by FullCalendar natively ─ */
         .fc-timegrid-event {
             border-radius: 6px !important;
