@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3C Content Schedule Planner</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" type="image/png" href="public/favicon.png">
+    <!-- Hard cache bust — forces fresh asset load once per browser session -->
+    <script>
+        (function() {
+            var key = '3c_cache_busted';
+            if (!sessionStorage.getItem(key)) {
+                sessionStorage.setItem(key, '1');
+                var url = new URL(window.location.href);
+                url.searchParams.set('_v', Date.now());
+                window.location.replace(url.toString());
+            }
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css?v=1.1.4">
+    <link rel="stylesheet" href="css/navigation.css?v=1.0.5">
+    <link rel="stylesheet" href="css/nav-toggle.css">
+    
+    <!-- Supabase Configuration - Load from config.js -->
+    <script src="config.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <img src="public/logo.png" alt="3C Logo" class="logo">
+            <h1 class="title">3C Content Schedule Planner</h1>
+        </div>
+        <div class="header-buttons">
+            <button id="supabase-indicator" class="btn btn-traffic-light" title="Supabase Connection">
+                🚦
+            </button>
+            <button class="btn btn-speaker" onclick="openCreatePostModal()" title="Create New Post">
+                🔊
+            </button>
+            <button class="btn btn-speaker" onclick="window.location.href='links-manager.html'" title="Manage Navigation Links">
+                🔗
+            </button>
+            <button id="signout-btn" class="btn btn-speaker" onclick="signOut()" title="Sign Out">
+                🚪
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Panel -->
+    <div id="nav-panel">
+        <div class="nav-content">
+            <a href="#" class="nav-icon" title="Memos">
+                📮
+            </a>
+            <a href="#" class="nav-icon" title="Voice Memo">
+                🎤
+            </a>
+            <a href="#" class="nav-icon" title="Chatroom">
+                👥
+            </a>
+            <a href="#" class="nav-icon" title="AI Assistant">
+                💡
+            </a>
+            <a href="#" class="nav-icon" title="Supabase">
+                💺
+            </a>
+            <a href="#" class="nav-icon" title="Railway">
+                🔋
+            </a>
+            <a href="#" class="nav-icon" title="Password Manager">
+                🔏
+            </a>
+            <a href="#" class="nav-icon mobile-view" title="Mobile View">
+                📱
+            </a>
+            <a href="/" class="nav-icon" title="Back to Dashboard">
+                🔙
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Toggle Container near Calendar -->
+    <div id="nav-toggle-container">
+        <button id="nav-toggle-btn" onclick="toggleNavPanel()" title="Navigation Menu">
+            💎
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="calendar-container">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Create New Post</h2>
+                <button class="close-btn" onclick="closePostModal()">&times;</button>
+            </div>
+            <form id="postForm" onsubmit="handlePostSubmit(event)">
+                <input type="hidden" id="postId">
+                <div class="form-group">
+                    <label class="form-label">Platform *</label>
+                    <select id="platform" class="form-select" required>
+                        <option value="">Select platform...</option>
+                        <option value="instagram">📸 Instagram</option>
+                        <option value="facebook">📘 Facebook</option>
+                        <option value="linkedin">💼 LinkedIn</option>
+                        <option value="twitter">🐦 Twitter/X</option>
+                        <option value="youtube">📺 YouTube</option>
+                        <option value="tiktok">🎵 TikTok</option>
+                        <option value="telegram">✈️ Telegram</option>
+                        <option value="pinterest">📌 Pinterest</option>
+                        <option value="whatsapp">💬 WhatsApp Business</option>
+                        <option value="discord">🎮 Discord</option>
+                        <option value="forum">💭 Forum</option>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Title *</label>
+                    <input type="text" id="title" class="form-input" placeholder="Post title..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Content *</label>
+                    <textarea id="content" class="form-textarea" placeholder="Post content..." required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Date *</label>
+                        <input type="date" id="scheduledDate" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Time</label>
+                        <input type="time" id="scheduledTime" class="form-input">
+                    </div>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="submit" class="btn btn-success" style="flex:1;">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="closePostModal()">Cancel</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display:none;" onclick="handleDeletePost()">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="js/supabaseAPI.js?v=1.1.3"></script>
+    <script src="js/app.js?v=1.1.3"></script>
+    <script src="js/navigation.js?v=1.0.3"></script>
+    <script>
+        // ── Sign out — wired to 🚪 button in header ────────────────────────────
+        async function signOut() {
+            try {
+                await supabaseAPI.client.auth.signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('❌ Sign out failed:', error);
+                alert('Sign out failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

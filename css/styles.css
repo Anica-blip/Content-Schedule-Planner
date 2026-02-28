@@ -1,0 +1,358 @@
+:root {
+    --dark-purple: #1a0b2e;
+    --medium-purple: #2d1b4e;
+    --light-purple: #9b59b6;
+    --lighter-purple: #b19cd9;
+    --orange: #ff6b35;
+    --blue: #4a90e2;
+    --green: #27ae60;
+    --white: #ffffff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background: linear-gradient(135deg, var(--dark-purple) 0%, var(--medium-purple) 100%);
+    color: var(--white);
+    min-height: 100vh;
+}
+
+.header {
+    background: rgba(45, 27, 78, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(155, 89, 182, 0.3);
+}
+
+.logo-section { display: flex; align-items: center; gap: 1rem; }
+.logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+.title { font-size: 2rem; font-weight: 700; color: var(--lighter-purple); }
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.btn-create { background: var(--orange); color: var(--white); }
+.btn-speaker { background: rgba(255,255,255,0.1); color: var(--white); }
+.btn-traffic-light { background: rgba(255,255,255,0.1); color: var(--white); font-size: 1.2rem; }
+
+.container { 
+    max-width: 1400px; 
+    margin: 2rem auto; 
+    padding: 0 2rem;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.calendar-container {
+    background: rgba(45, 27, 78, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    display: block !important;
+    visibility: visible !important;
+    min-height: 600px;
+}
+
+#calendar {
+    display: block !important;
+    visibility: visible !important;
+    width: 100%;
+    min-height: 500px;
+}
+
+.fc { background: transparent; }
+.fc-toolbar-title { color: var(--lighter-purple) !important; font-size: 1.75rem !important; }
+.fc-button { background: var(--light-purple) !important; border: none !important; }
+.fc-day-today { background: rgba(155, 89, 182, 0.15) !important; }
+
+/* Force side-by-side layout for events at same time in day/week view */
+.fc-timegrid-col-events {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
+}
+
+.fc-timegrid-event-harness {
+    position: relative !important;
+    flex: 1 1 48% !important;
+    max-width: 48% !important;
+    min-width: 48% !important;
+}
+
+/* Month view - compact events */
+.fc-daygrid-event {
+    margin: 1px 0 !important;
+    padding: 2px !important;
+}
+
+.fc-daygrid-event-harness {
+    margin: 1px 0 !important;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--medium-purple);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; }
+.modal-title { font-size: 1.5rem; color: var(--lighter-purple); }
+.close-btn { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+
+.form-group { margin-bottom: 1.5rem; }
+.form-label { display: block; margin-bottom: 0.5rem; color: var(--lighter-purple); font-weight: 600; }
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(26, 11, 46, 0.5);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: 6px;
+    color: var(--white);
+    font-size: 1rem;
+}
+
+.form-textarea { min-height: 120px; resize: vertical; }
+
+.form-row { display: flex; gap: 1rem; }
+.form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.4); }
+
+/* Calendar event styling */
+.fc-event { cursor: pointer; border-radius: 4px; padding: 2px 4px; }
+.fc-event-title { font-weight: 600; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header { flex-direction: column; gap: 1rem; }
+    .container { padding: 0 1rem; }
+    .calendar-container { padding: 1rem; }
+    .form-row { flex-direction: column; }
+}
+/* Dark dropdown */
+.form-select { background: #2d2d2d !important; }
+.form-select option { background: #2d2d2d; }
+
+/* Calendar header light purple */
+.fc-col-header-cell { background-color: #b19cd9 !important; }
+.fc-col-header-cell-cushion { color: #1a0b2e !important; font-weight: 600; }
+
+
+/* Smaller image preview in modal */
+#imagePreview { 
+    max-width: 200px !important; 
+    max-height: 200px !important; 
+}
+/* Base event styling */
+.fc-event { 
+    border-radius: 6px !important; 
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+
+/* Month view events - FIXED SIZE with wrapping */
+.fc-daygrid-event { 
+    height: 60px !important; 
+    width: 95px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+    min-width: 95px !important;
+    max-width: 95px !important;
+    display: flex !important;
+    align-items: stretch !important;
+}
+
+/* Week/Day view events - Square containers */
+.fc-timegrid-event {
+    height: 50px !important;
+    width: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    margin: 0 !important;
+}
+
+/* Expand time slots to fit containers */
+.fc-timegrid-slot {
+    height: 60px !important;
+    min-height: 60px !important;
+}
+
+/* Time labels styling */
+.fc-timegrid-slot-label {
+    font-size: 11px !important;
+    color: var(--lighter-purple) !important;
+}
+
+/* Week view - 7 columns */
+.fc-timegrid-col {
+    min-width: 100px !important;
+}
+
+/* Allow multiple events at same time to stack horizontally */
+.fc-timegrid-col-events {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+}
+
+/* Allow multiple events at same time to appear side by side */
+.fc-timegrid-event-harness {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    vertical-align: top !important;
+}
+
+/* Day view specific - force left alignment in rows */
+.fc-view-harness-active > .fc-view-harness > .fc-timeGridDay-view .fc-timegrid-col-events,
+.fc-timeGridDay-view .fc-timegrid-col-events {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+/* Force event harness to left align in day view */
+.fc-timeGridDay-view .fc-timegrid-event-harness {
+    margin-left: 0 !important;
+    margin-right: 2px !important;
+}
+
+/* Prevent centering in day view rows */
+.fc-timeGridDay-view .fc-timegrid-col-frame {
+    display: flex !important;
+    justify-content: flex-start !important;
+}
+
+/* Light background already in event content */
+.fc-event-main {
+    padding: 0 !important;
+    height: 100% !important;
+}
+
+.fc-event-main-frame {
+    height: 100% !important;
+}
+
+/* Force images to display */
+.fc-event img,
+.fc-event-main img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Month view images - fixed size */
+.fc-daygrid-event img {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+}
+
+/* Week/Day view images - 25px for square containers */
+.fc-timegrid-event img {
+    width: 25px !important;
+    height: 25px !important;
+    min-width: 25px !important;
+    min-height: 25px !important;
+    max-width: 25px !important;
+    max-height: 25px !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+}
+
+/* Smaller image preview in modal */
+#imagePreview { 
+    max-width: 200px !important; 
+    max-height: 200px !important; 
+}
+/* Header button group */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Traffic light button - just emoji, no container */
+.btn-traffic-light {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    font-size: 42px !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease;
+}
+
+.btn-traffic-light:hover {
+    transform: scale(1.15);
+}
+
+/* Speaker button - medium size, transparent container */
+.btn-speaker {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    font-size: 38px !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease;
+}
+
+.btn-speaker:hover {
+    transform: scale(1.15);
+}
+
+/* Make New Post button square */
+.btn-create {
+    width: 110px;
+    height: 45px;
+    background: var(--orange);
+    border-radius: 8px;
+}
