@@ -126,9 +126,11 @@ function initCalendar() {
             await updatePostDateTime(postId, newDate, newTime);
         },
         eventContent: function(arg) {
+            console.log('🎨 Rendering event:', arg.event.id, arg.event.title);
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             const view = calendar.view.type;
+            console.log('📍 View type:', view, 'Platform:', platform.abbr);
 
             // ── Per-view sizing ────────────────────────────────────────────────
             const isMonth = view === 'dayGridMonth';
