@@ -126,11 +126,9 @@ function initCalendar() {
             await updatePostDateTime(postId, newDate, newTime);
         },
         eventContent: function(arg) {
-            console.log('🎨 Rendering event:', arg.event.id, arg.event.title);
             const post = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             const view = calendar.view.type;
-            console.log('📍 View type:', view, 'Platform:', platform.abbr);
 
             // ── Per-view sizing ────────────────────────────────────────────────
             const isMonth = view === 'dayGridMonth';
@@ -224,30 +222,29 @@ function initCalendar() {
 }
 
 async function loadPosts() {
-    console.log('📅 Loading posts...');
+    console.log('Loading posts...');
     let posts = [];
     
     // Try Supabase first
     if (supabaseAPI.initialized) {
-        console.log('✅ Supabase initialized, fetching from database');
+        console.log('Supabase initialized, fetching from database');
         const currentDate = calendar.getDate();
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const endOfMonth   = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         
-        const startStr = startOfMonth.toISOString().split('T')[0];
-        const endStr = endOfMonth.toISOString().split('T')[0];
-        console.log('📅 Querying posts from', startStr, 'to', endStr);
-        
-        posts = await supabaseAPI.getPosts(startStr, endStr);
-        console.log('📊 Fetched', posts.length, 'posts from Supabase:', posts);
+        posts = await supabaseAPI.getPosts(
+            startOfMonth.toISOString().split('T')[0],
+            endOfMonth.toISOString().split('T')[0]
+        );
+        console.log('Fetched', posts.length, 'posts from Supabase:', posts);
     } else {
-        console.log('⚠️ Supabase not initialized, using localStorage');
+        console.log('Supabase not initialized, using localStorage');
         posts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-        console.log('📊 Loaded', posts.length, 'posts from localStorage:', posts);
+        console.log('Loaded', posts.length, 'posts from localStorage:', posts);
     }
     
     calendar.removeAllEvents();
-    console.log('🗑️ Cleared all existing events');
+    console.log('Cleared all existing events');
     
     if (posts.length === 0) {
         console.warn('⚠️ No posts to display');
@@ -274,13 +271,6 @@ async function loadPosts() {
         if (post.scheduled_time) {
             startDateTime = `${dateOnly}T${post.scheduled_time}`;
         }
-
-        console.log('➕ Adding event:', {
-            id: post.id,
-            title: post.title,
-            start: startDateTime,
-            platform: post.platform
-        });
 
         calendar.addEvent({
             id: post.id,
