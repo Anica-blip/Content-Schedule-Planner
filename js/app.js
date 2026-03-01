@@ -54,12 +54,11 @@ async function initApp() {
     console.log('✅ App initialized');
 }
 
-// ─── Injected CSS for modern calendar event styling ───────────────────────────
 function injectCalendarStyles() {
     const style = document.createElement('style');
     style.id = '3c-calendar-styles';
     style.textContent = `
-        /* ── WEEK/DAY VIEW: compact cards ────────────────────────────────────── */
+        /* ── WEEK/DAY VIEW: compact event cards ──────────────────────────────── */
         .fc-timegrid-event {
             border-radius: 6px !important;
             min-height: 20px !important;
@@ -70,7 +69,7 @@ function injectCalendarStyles() {
             overflow: visible !important;
         }
 
-        /* ── ALL VIEWS: remove default FullCalendar event background ─────────── */
+        /* ── ALL VIEWS: remove default FC event chrome ───────────────────────── */
         .fc-event {
             background: transparent !important;
             border: none !important;
@@ -85,69 +84,11 @@ function injectCalendarStyles() {
         }
 
         /*
-         * ── Manual column split classes ────────────────────────────────────────
-         * Applied to .fc-timegrid-event-harness via eventDidMount.
-         * Using !important ensures these survive FC's own post-mount inline styles.
-         *
-         * Formula: available=96%, gap=2%
-         *   width  = (96 - 2*(n-1)) / n
-         *   left-n = 2 + n*(width+2)
-         *
-         * col-1-of-1 : single event  → full width
-         * col-1-of-2 : 1st of 2      → left slot
-         * col-2-of-2 : 2nd of 2      → right slot
-         * col-1-of-3 : 1st of 3      → left slot
-         * col-2-of-3 : 2nd of 3      → centre slot
-         * col-3-of-3 : 3rd of 3      → right slot
+         * 2B: FC renders the grid background only.
+         * Container placement for week/day is handled entirely by our
+         * requestAnimationFrame logic in eventDidMount below.
+         * No harness CSS rules here — rAF+setProperty('important') wins.
          */
-
-        /* 1 event */
-        .fc-timegrid-event-harness.c3-col-1-of-1 {
-            width: 96% !important;
-            left:  2%  !important;
-            right: auto !important;
-            inset-inline-start: 2%   !important;
-            inset-inline-end:   auto !important;
-        }
-
-        /* 2 events — each 47% with 2% gap */
-        .fc-timegrid-event-harness.c3-col-1-of-2 {
-            width: 47% !important;
-            left:  2%  !important;
-            right: auto !important;
-            inset-inline-start: 2%   !important;
-            inset-inline-end:   auto !important;
-        }
-        .fc-timegrid-event-harness.c3-col-2-of-2 {
-            width: 47% !important;
-            left:  51% !important;
-            right: auto !important;
-            inset-inline-start: 51%  !important;
-            inset-inline-end:   auto !important;
-        }
-
-        /* 3 events — each 30.67% with 2% gap */
-        .fc-timegrid-event-harness.c3-col-1-of-3 {
-            width: 30.67% !important;
-            left:  2%     !important;
-            right: auto   !important;
-            inset-inline-start: 2%   !important;
-            inset-inline-end:   auto !important;
-        }
-        .fc-timegrid-event-harness.c3-col-2-of-3 {
-            width: 30.67% !important;
-            left:  34.67% !important;
-            right: auto   !important;
-            inset-inline-start: 34.67% !important;
-            inset-inline-end:   auto   !important;
-        }
-        .fc-timegrid-event-harness.c3-col-3-of-3 {
-            width: 30.67% !important;
-            left:  67.33% !important;
-            right: auto   !important;
-            inset-inline-start: 67.33% !important;
-            inset-inline-end:   auto   !important;
-        }
     `;
     document.head.appendChild(style);
 }
@@ -304,42 +245,69 @@ function initCalendar() {
             return { html };
         },
 
-        // ── Manual column positioning — bypasses FC native overlap algorithm ──────
-        // FC's native splitting is unreliable with custom eventContent HTML.
-        // Instead we pre-calculate colIndex/colTotal in loadPosts() and apply
-        // precise harness geometry here after each event mounts in the DOM.
+        // ── 2B: Our container placement — runs AFTER FC's own layout pass ────────
         //
-        // Formula (timeGrid views only — week and day):
-        //   available  = 96%  (2% margin each side of the day column)
-        //   gap        = 2%   (space between containers)
-        //   width      = (96 - gap × (colTotal-1)) / colTotal
-        //   left       = 2 + colIndex × (width + gap)
+        // requestAnimationFrame queues our code for the next browser paint frame,
+        // which is AFTER FullCalendar has finished injecting its own inline styles
+        // on the harness. style.setProperty(prop, value, 'important') then sets
+        // an inline !important value which cannot be overridden by FC's plain
+        // inline styles (non-important inline styles lose to important inline styles).
         //
-        // 1 event  → width 96%,    left 2%
-        // 2 events → width 47%,    left 2% / 51%
-        // 3 events → width 30.67%, left 2% / 34.67% / 67.33%
-        // Month view is untouched — FC handles its own day-grid stacking fine.
+        // Week view — max 2 containers per row, wraps to next row:
+        //   1 post  → full column width
+        //   2 posts → [A][B] side by side, each ~50% minus gap
+        //   3 posts → row 1: [A][B], row 2: [C] left-aligned
+        //   4 posts → row 1: [A][B], row 2: [C][D]
+        //
+        // Day view — all containers in one row, no wrap:
+        //   1 post  → full row width
+        //   2 posts → [A][B] side by side
+        //   3 posts → [A][B][C] equal thirds
+        //
         eventDidMount: function(info) {
             const view = info.view.type;
             if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
 
-            const { colIndex, colTotal } = info.event.extendedProps;
-            const total = colTotal || 1;
-            const index = (colIndex ?? 0) + 1; // convert 0-based to 1-based
-
             const harness = info.el.closest('.fc-timegrid-event-harness');
             if (!harness) return;
 
-            // Remove any previously applied c3-col class
-            harness.className = harness.className
-                .split(' ')
-                .filter(c => !c.startsWith('c3-col-'))
-                .join(' ');
+            const { colIndex, colTotal } = info.event.extendedProps;
+            const total  = colTotal || 1;
+            const idx    = colIndex ?? 0;
 
-            // Apply the matching CSS class — !important rules in injectCalendarStyles
-            // override FC's own post-mount inline styles on the harness element.
-            const cls = `c3-col-${index}-of-${total}`;
-            harness.classList.add(cls);
+            requestAnimationFrame(() => {
+                const parent = harness.parentElement;
+                if (!parent) return;
+
+                const parentPx = parent.offsetWidth;
+                if (!parentPx) return;
+
+                // Week: wrap after 2 per row. Day: all in one row.
+                const maxPerRow  = (view === 'timeGridWeek') ? 2 : total;
+                const row        = Math.floor(idx / maxPerRow);
+                const col        = idx % maxPerRow;
+
+                // How many containers sit in THIS row (last row may have fewer)
+                const itemsInRow = Math.min(maxPerRow, total - row * maxPerRow);
+
+                const gapPx    = 4;  // px between containers
+                const widthPx  = (parentPx - gapPx * (itemsInRow - 1)) / itemsInRow;
+                const leftPx   = col * (widthPx + gapPx);
+
+                // If wrapping to row 2+, push top down by row height + 2px breathing room
+                const rowHeightPx  = harness.offsetHeight || 30;
+                const topOffsetPx  = row * (rowHeightPx + 2);
+
+                harness.style.setProperty('width',  `${widthPx.toFixed(1)}px`, 'important');
+                harness.style.setProperty('left',   `${leftPx.toFixed(1)}px`,  'important');
+                harness.style.setProperty('right',  'auto',                     'important');
+                harness.style.setProperty('inset-inline-start', `${leftPx.toFixed(1)}px`, 'important');
+                harness.style.setProperty('inset-inline-end',   'auto',                   'important');
+
+                if (topOffsetPx > 0) {
+                    harness.style.setProperty('margin-top', `${topOffsetPx}px`, 'important');
+                }
+            });
         }
     });
     calendar.render();
