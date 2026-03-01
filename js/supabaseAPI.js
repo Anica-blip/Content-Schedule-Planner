@@ -56,26 +56,21 @@ class SupabaseAPI {
             return [];
         }
         
-        // Debug: Check total posts for user
-        const { data: allPosts } = await this.client
-            .from('posts')
-            .select('scheduled_date')
-            .eq('user_id', user.id);
-        console.log('🔍 Total posts in database for user:', allPosts?.length || 0, 'Dates:', allPosts?.map(p => p.scheduled_date));
-        
-        console.log('🔍 Querying with date range:', startDate, 'to', endDate);
+        // Load ALL posts for user, no date filtering
+        console.log('🔍 Loading all posts for user...');
         const { data, error } = await this.client
             .from('posts')
             .select('*')
             .eq('user_id', user.id)
-            .gte('scheduled_date', startDate)
-            .lte('scheduled_date', endDate)
             .order('scheduled_date', { ascending: true });
         if (error) {
             console.error('❌ Error fetching posts:', error);
             return [];
         }
         console.log('✅ Fetched posts for user:', user.id, '- Count:', data?.length || 0);
+        if (data && data.length > 0) {
+            console.log('📅 Post dates:', data.map(p => p.scheduled_date));
+        }
         return data || [];
     }
 
