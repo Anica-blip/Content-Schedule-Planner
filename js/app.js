@@ -246,24 +246,11 @@ function initCalendar() {
         },
 
         // ── 2B: Our container placement — runs AFTER FC's own layout pass ────────
-        //
-        // requestAnimationFrame queues our code for the next browser paint frame,
-        // which is AFTER FullCalendar has finished injecting its own inline styles
-        // on the harness. style.setProperty(prop, value, 'important') then sets
-        // an inline !important value which cannot be overridden by FC's plain
-        // inline styles (non-important inline styles lose to important inline styles).
-        //
-        // Week view — max 2 containers per row, wraps to next row:
-        //   1 post  → full column width
-        //   2 posts → [A][B] side by side, each ~50% minus gap
-        //   3 posts → row 1: [A][B], row 2: [C] left-aligned
-        //   4 posts → row 1: [A][B], row 2: [C][D]
-        //
-        // Day view — all containers in one row, no wrap:
-        //   1 post  → full row width
-        //   2 posts → [A][B] side by side
-        //   3 posts → [A][B][C] equal thirds
-        //
+        // Week: 1-min offset (loadPosts) keeps events in correct day column.
+        //       rAF then sizes each to half-column so they sit side by side.
+        // Day:  Full row divided equally. Uses .fc-timegrid-col-events width
+        //       which is always painted before eventDidMount fires — gives a
+        //       reliable non-zero offsetWidth unlike harness.parentElement.
         eventDidMount: function(info) {
             const view = info.view.type;
             if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
@@ -272,41 +259,27 @@ function initCalendar() {
             if (!harness) return;
 
             const { colIndex, colTotal } = info.event.extendedProps;
-            const total  = colTotal || 1;
-            const idx    = colIndex ?? 0;
+            const total = colTotal || 1;
+            const idx   = colIndex ?? 0;
 
             requestAnimationFrame(() => {
-                const parent = harness.parentElement;
-                if (!parent) return;
+                // Walk up to the reliably-painted column events container
+                const colEvents = harness.closest('.fc-timegrid-col-events');
+                if (!colEvents) return;
 
-                const parentPx = parent.offsetWidth;
+                const parentPx = colEvents.offsetWidth;
                 if (!parentPx) return;
 
-                // Week: wrap after 2 per row. Day: all in one row.
-                const maxPerRow  = (view === 'timeGridWeek') ? 2 : total;
-                const row        = Math.floor(idx / maxPerRow);
-                const col        = idx % maxPerRow;
+                const gapPx   = 4;
+                const widthPx = (parentPx - gapPx * (total - 1)) / total;
+                const leftPx  = idx * (widthPx + gapPx);
 
-                // How many containers sit in THIS row (last row may have fewer)
-                const itemsInRow = Math.min(maxPerRow, total - row * maxPerRow);
-
-                const gapPx    = 4;  // px between containers
-                const widthPx  = (parentPx - gapPx * (itemsInRow - 1)) / itemsInRow;
-                const leftPx   = col * (widthPx + gapPx);
-
-                // If wrapping to row 2+, push top down by row height + 2px breathing room
-                const rowHeightPx  = harness.offsetHeight || 30;
-                const topOffsetPx  = row * (rowHeightPx + 2);
-
-                harness.style.setProperty('width',  `${widthPx.toFixed(1)}px`, 'important');
-                harness.style.setProperty('left',   `${leftPx.toFixed(1)}px`,  'important');
-                harness.style.setProperty('right',  'auto',                     'important');
+                harness.style.setProperty('width', `${widthPx.toFixed(1)}px`, 'important');
+                harness.style.setProperty('left',  `${leftPx.toFixed(1)}px`,  'important');
+                harness.style.setProperty('right', 'auto',                     'important');
                 harness.style.setProperty('inset-inline-start', `${leftPx.toFixed(1)}px`, 'important');
                 harness.style.setProperty('inset-inline-end',   'auto',                   'important');
-
-                if (topOffsetPx > 0) {
-                    harness.style.setProperty('margin-top', `${topOffsetPx}px`, 'important');
-                }
+                harness.style.setProperty('margin-top', '0px',                 'important');
             });
         }
     });
@@ -349,11 +322,14 @@ async function loadPosts(startStr, endStr) {
         return;
     }
 
-    // ── Pre-calculate column groups ────────────────────────────────────────────
-    // Group posts that share the same date + time into a slot.
-    // Each post gets colIndex (0-based position) and colTotal (size of its group).
-    // eventDidMount uses these to manually position the harness with exact widths.
-    const slotGroups = {}; // key: "YYYY-MM-DD_HH:MM" → array of post ids in order
+    // ── 1-minute display offset for same-timestamp events ─────────────────────
+    // FC cannot place two events at identical timestamps in the same day column
+    // without pushing one to the next day (slotEventOverlap behaviour).
+    // Solution: offset each duplicate by exactly 1 minute per position.
+    // This is DISPLAY ONLY — extendedProps.time always holds the original stored
+    // time so the card label (🕐 20:00:00) is always accurate.
+    // Result in week: containers sit side by side within the correct day column.
+    const slotGroups = {};
 
     posts.forEach(post => {
         let dateOnly = post.scheduled_date;
@@ -378,7 +354,17 @@ async function loadPosts(startStr, endStr) {
 
         let startDateTime = dateOnly;
         if (post.scheduled_time) {
-            startDateTime = `${dateOnly}T${post.scheduled_time}`;
+            if (colIndex === 0) {
+                // First event — exact stored time, no offset
+                startDateTime = `${dateOnly}T${post.scheduled_time}`;
+            } else {
+                // Subsequent events — offset by 1 min × position (display only)
+                const [hh, mm] = post.scheduled_time.substring(0, 5).split(':').map(Number);
+                const totalMins = hh * 60 + mm + colIndex;
+                const offsetHH  = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+                const offsetMM  = String(totalMins % 60).padStart(2, '0');
+                startDateTime   = `${dateOnly}T${offsetHH}:${offsetMM}:00`;
+            }
         }
 
         calendar.addEvent({
@@ -391,9 +377,9 @@ async function loadPosts(startStr, endStr) {
                 platform: post.platform,
                 title:    post.title,
                 content:  post.content,
-                time:     post.scheduled_time,
-                colIndex,   // 0-based position within same-time group
-                colTotal    // total events sharing this date + time
+                time:     post.scheduled_time, // always original stored time
+                colIndex,
+                colTotal
             }
         });
     });
