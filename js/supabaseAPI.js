@@ -56,6 +56,14 @@ class SupabaseAPI {
             return [];
         }
         
+        // Debug: Check total posts for user
+        const { data: allPosts } = await this.client
+            .from('posts')
+            .select('scheduled_date')
+            .eq('user_id', user.id);
+        console.log('🔍 Total posts in database for user:', allPosts?.length || 0, 'Dates:', allPosts?.map(p => p.scheduled_date));
+        
+        console.log('🔍 Querying with date range:', startDate, 'to', endDate);
         const { data, error } = await this.client
             .from('posts')
             .select('*')

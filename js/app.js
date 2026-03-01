@@ -242,10 +242,11 @@ async function loadPosts() {
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const endOfMonth   = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         
-        posts = await supabaseAPI.getPosts(
-            startOfMonth.toISOString().split('T')[0],
-            endOfMonth.toISOString().split('T')[0]
-        );
+        const startStr = startOfMonth.toISOString().split('T')[0];
+        const endStr = endOfMonth.toISOString().split('T')[0];
+        console.log('📅 Querying posts from', startStr, 'to', endStr);
+        
+        posts = await supabaseAPI.getPosts(startStr, endStr);
         console.log('📊 Fetched', posts.length, 'posts from Supabase:', posts);
     } else {
         console.log('⚠️ Supabase not initialized, using localStorage');
