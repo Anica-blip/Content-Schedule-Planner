@@ -64,6 +64,16 @@ function injectCalendarStyles() {
         .fc-timegrid-event-harness {
             overflow: visible !important;
         }
+        /* Force same-time events to display side-by-side with equal width */
+        .fc-timegrid-col-events {
+            display: flex !important;
+            flex-direction: row !important;
+        }
+        .fc-timegrid-event-harness[style*="left"] {
+            position: relative !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
 
         /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
         .fc-event {
