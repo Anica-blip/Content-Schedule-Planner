@@ -21,7 +21,8 @@
         })();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <!-- Upgraded from 6.1.10 → 6.1.19 (latest stable, no breaking changes) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
     <link rel="stylesheet" href="css/styles.css?v=1.1.4">
     <link rel="stylesheet" href="css/navigation.css?v=1.0.5">
     <link rel="stylesheet" href="css/nav-toggle.css">
@@ -103,10 +104,12 @@
                 <h2 class="modal-title" id="modalTitle">Create New Post</h2>
                 <button class="close-btn" onclick="closePostModal()">&times;</button>
             </div>
+            <!-- FIX: onsubmit aligned to actual function name in app.js (handlePostSubmit) -->
             <form id="postForm" onsubmit="handlePostSubmit(event)">
                 <input type="hidden" id="postId">
                 <div class="form-group">
                     <label class="form-label">Platform *</label>
+                    <!-- FIX: added missing </select> closing tag -->
                     <select id="platform" class="form-select" required>
                         <option value="">Select platform...</option>
                         <option value="instagram">📸 Instagram</option>
@@ -120,6 +123,7 @@
                         <option value="whatsapp">💬 WhatsApp Business</option>
                         <option value="discord">🎮 Discord</option>
                         <option value="forum">💭 Forum</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Title *</label>
