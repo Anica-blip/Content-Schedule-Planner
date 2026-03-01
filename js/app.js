@@ -6,6 +6,13 @@ let calendar;
 let currentPost = null;
 let selectedImageFile = null;
 
+// ── datesSet debounce timer ────────────────────────────────────────────────────
+// datesSet fires multiple times rapidly when switching views (FullCalendar
+// internal re-renders). Without debouncing, each fire calls removeAllEvents()
+// and re-fetches, causing a race condition where the last fire "wins" and
+// wipes events loaded by a prior fire. 150ms settles all view-switch bursts.
+let _datesSetTimer = null;
+
 // Platform configuration with abbreviations and colors (matching dashboard)
 const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
@@ -115,12 +122,17 @@ function initCalendar() {
 
         displayEventTime: true,
 
-        // ── FIX #4: datesSet fires on every view/navigation change ────────────
-        // This replaces the one-time month calculation in initApp().
-        // FullCalendar passes the exact visible range (info.startStr / info.endStr)
-        // so we always fetch exactly what is on screen.
-        datesSet: async function(info) {
-            await loadPosts(info.startStr, info.endStr);
+        // ── datesSet: debounced to prevent race conditions ─────────────────────
+        // FullCalendar fires datesSet multiple times in rapid succession when
+        // switching views (month→week→day). Without debounce each fire calls
+        // removeAllEvents() then re-fetches — the last fire wins and wipes
+        // events from a prior fire. clearTimeout+setTimeout ensures only ONE
+        // fetch runs after the burst settles (150ms covers all FC internal fires).
+        datesSet: function(info) {
+            clearTimeout(_datesSetTimer);
+            _datesSetTimer = setTimeout(async () => {
+                await loadPosts(info.startStr, info.endStr);
+            }, 150);
         },
 
         viewDidMount: function(info) {
@@ -271,6 +283,15 @@ async function loadPosts(startStr, endStr) {
         return;
     }
 
+    // ── Stack-below offset ─────────────────────────────────────────────────────
+    // When two or more posts share the same date + time, FullCalendar forces
+    // them side-by-side (cramped columns). Instead we offset each duplicate by
+    // +30 min PER occurrence so they stack below each other in the time grid.
+    // This is DISPLAY ONLY — extendedProps.time always holds the original stored
+    // time so the card label (🕐 20:00:00) is always accurate.
+    // Key format: "YYYY-MM-DD_HH:MM" → count of events seen at that slot so far.
+    const slotCount = {};
+
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
 
@@ -280,8 +301,27 @@ async function loadPosts(startStr, endStr) {
         }
 
         let startDateTime = dateOnly;
+
         if (post.scheduled_time) {
-            startDateTime = `${dateOnly}T${post.scheduled_time}`;
+            // Normalise to HH:MM for the slot key (ignore seconds)
+            const timeKey  = post.scheduled_time.substring(0, 5);
+            const slotKey  = `${dateOnly}_${timeKey}`;
+
+            // How many events have already been placed in this slot?
+            const count    = slotCount[slotKey] || 0;
+            slotCount[slotKey] = count + 1;
+
+            if (count === 0) {
+                // First event at this slot — use exact stored time
+                startDateTime = `${dateOnly}T${post.scheduled_time}`;
+            } else {
+                // Subsequent events — offset by 30 min × position index
+                const [hh, mm] = timeKey.split(':').map(Number);
+                const totalMins  = hh * 60 + mm + count * 30;
+                const offsetHH   = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+                const offsetMM   = String(totalMins % 60).padStart(2, '0');
+                startDateTime    = `${dateOnly}T${offsetHH}:${offsetMM}:00`;
+            }
         }
 
         calendar.addEvent({
@@ -294,7 +334,7 @@ async function loadPosts(startStr, endStr) {
                 platform: post.platform,
                 title:    post.title,
                 content:  post.content,
-                time:     post.scheduled_time
+                time:     post.scheduled_time   // always the original stored time
             }
         });
     });
