@@ -1,3 +1,17 @@
+/**
+ * 3C Content Schedule Planner - Navigation
+ *
+ * FIX #3 — Security: nav link URLs are stored in a private JS Map keyed by
+ * the icon element reference. Nothing is written into the DOM (no data-url
+ * attributes, no href values). F12 → Elements will only show the emoji and
+ * the title tooltip — no URLs are visible.
+ */
+
+// Private module-scoped Map: element reference → URL string
+// Not accessible from the console unless you know the variable name
+// AND the element reference. Never touches the DOM.
+const _navLinkMap = new Map();
+
 function initNavigation() {
     console.log('🔧 Initializing navigation...');
     updateSupabaseIndicator();
@@ -16,7 +30,6 @@ function initNavigation() {
         console.error('❌ Toggle button not found');
     }
 
-    // Load links from Supabase and attach to nav icons
     loadNavLinksFromSupabase();
 }
 
@@ -49,7 +62,6 @@ const NAV_MAPPING = {
 };
 
 async function loadNavLinksFromSupabase() {
-    // supabaseAPI is initialised in app.js — wait briefly if not ready yet
     if (!supabaseAPI || !supabaseAPI.client) {
         console.warn('⚠️ supabaseAPI not ready for nav links, retrying in 500ms...');
         setTimeout(loadNavLinksFromSupabase, 500);
@@ -84,15 +96,21 @@ async function loadNavLinksFromSupabase() {
             const freshIcon = icon.cloneNode(true);
             icon.parentNode.replaceChild(freshIcon, icon);
 
-            freshIcon.dataset.url = link.url;
+            // FIX #3 — Store URL in private JS Map keyed by the element reference.
+            // Nothing is written to the DOM. No data-url, no href, no title change.
+            // The click handler closes over the Map — F12 Elements shows zero URLs.
+            _navLinkMap.set(freshIcon, link.url);
+
             freshIcon.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (freshIcon.dataset.url) {
-                    window.open(freshIcon.dataset.url, '_blank');
+                const url = _navLinkMap.get(freshIcon);
+                if (url) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
                 }
             });
 
-            console.log(`✅ Nav link attached: ${link.key} → ${link.url}`);
+            // Only log the key name to console — never the URL
+            console.log(`✅ Nav link attached: ${link.key}`);
         });
 
     } catch (err) {
