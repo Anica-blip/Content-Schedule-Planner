@@ -242,6 +242,44 @@ function initCalendar() {
                 </div>`;
 
             return { html };
+        },
+
+        // ── Manual column positioning — bypasses FC native overlap algorithm ──────
+        // FC's native splitting is unreliable with custom eventContent HTML.
+        // Instead we pre-calculate colIndex/colTotal in loadPosts() and apply
+        // precise harness geometry here after each event mounts in the DOM.
+        //
+        // Formula (timeGrid views only — week and day):
+        //   available  = 96%  (2% margin each side of the day column)
+        //   gap        = 2%   (space between containers)
+        //   width      = (96 - gap × (colTotal-1)) / colTotal
+        //   left       = 2 + colIndex × (width + gap)
+        //
+        // 1 event  → width 96%,    left 2%
+        // 2 events → width 47%,    left 2% / 51%
+        // 3 events → width 30.67%, left 2% / 34.67% / 67.33%
+        // Month view is untouched — FC handles its own day-grid stacking fine.
+        eventDidMount: function(info) {
+            const view = info.view.type;
+            if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
+
+            const { colIndex, colTotal } = info.event.extendedProps;
+            if (!colTotal || colTotal <= 1) return; // single event — no override needed
+
+            const gap       = 2;
+            const available = 96;
+            const width     = (available - gap * (colTotal - 1)) / colTotal;
+            const left      = 2 + colIndex * (width + gap);
+
+            // The harness is the FC element that controls event position/width
+            const harness = info.el.closest('.fc-timegrid-event-harness');
+            if (!harness) return;
+
+            harness.style.width              = `${width.toFixed(2)}%`;
+            harness.style.left               = `${left.toFixed(2)}%`;
+            harness.style.right              = 'auto';
+            harness.style.insetInlineStart   = `${left.toFixed(2)}%`;
+            harness.style.insetInlineEnd     = 'auto';
         }
     });
     calendar.render();
@@ -283,22 +321,33 @@ async function loadPosts(startStr, endStr) {
         return;
     }
 
-    // ── Exact stored times — let FullCalendar handle column splitting natively ──
-    // slotEventOverlap: false (set in initCalendar) tells FC to split events that
-    // share the same start time into equal-width side-by-side columns automatically.
-    // 2 events at 20:00 → 2 columns of 50% width each.
-    // 3 events at 20:00 → 3 columns of 33% width each.
-    // We must use the EXACT stored time for every event — any artificial offset
-    // causes FC to treat events as non-overlapping and breaks the column split.
+    // ── Pre-calculate column groups ────────────────────────────────────────────
+    // Group posts that share the same date + time into a slot.
+    // Each post gets colIndex (0-based position) and colTotal (size of its group).
+    // eventDidMount uses these to manually position the harness with exact widths.
+    const slotGroups = {}; // key: "YYYY-MM-DD_HH:MM" → array of post ids in order
+
+    posts.forEach(post => {
+        let dateOnly = post.scheduled_date;
+        if (dateOnly && dateOnly.includes('T')) dateOnly = dateOnly.split('T')[0];
+        const timeKey = post.scheduled_time ? post.scheduled_time.substring(0, 5) : 'allday';
+        const slotKey = `${dateOnly}_${timeKey}`;
+        if (!slotGroups[slotKey]) slotGroups[slotKey] = [];
+        slotGroups[slotKey].push(post.id);
+    });
+
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
 
         let dateOnly = post.scheduled_date;
-        if (dateOnly && dateOnly.includes('T')) {
-            dateOnly = dateOnly.split('T')[0];
-        }
+        if (dateOnly && dateOnly.includes('T')) dateOnly = dateOnly.split('T')[0];
 
-        // Use exact stored time — no offset applied
+        const timeKey  = post.scheduled_time ? post.scheduled_time.substring(0, 5) : 'allday';
+        const slotKey  = `${dateOnly}_${timeKey}`;
+        const group    = slotGroups[slotKey];
+        const colIndex = group.indexOf(post.id);
+        const colTotal = group.length;
+
         let startDateTime = dateOnly;
         if (post.scheduled_time) {
             startDateTime = `${dateOnly}T${post.scheduled_time}`;
@@ -314,7 +363,9 @@ async function loadPosts(startStr, endStr) {
                 platform: post.platform,
                 title:    post.title,
                 content:  post.content,
-                time:     post.scheduled_time
+                time:     post.scheduled_time,
+                colIndex,   // 0-based position within same-time group
+                colTotal    // total events sharing this date + time
             }
         });
     });
