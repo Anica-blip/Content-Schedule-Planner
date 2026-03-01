@@ -9,16 +9,16 @@ let selectedImageFile = null;
 // Platform configuration with abbreviations and colors (matching dashboard)
 const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
-    facebook: { name: 'Facebook', abbr: 'FB', icon: '📘', color: '#1877f2' },
-    linkedin: { name: 'LinkedIn', abbr: 'LK', icon: '💼', color: '#0077b5' },
-    twitter: { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
-    youtube: { name: 'YouTube', abbr: 'YT', icon: '📺', color: '#ff0000' },
-    tiktok: { name: 'TikTok', abbr: 'TK', icon: '🎵', color: '#000000' },
-    telegram: { name: 'Telegram', abbr: 'TG', icon: '✈️', color: '#0088cc' },
+    facebook:  { name: 'Facebook',  abbr: 'FB', icon: '📘', color: '#1877f2' },
+    linkedin:  { name: 'LinkedIn',  abbr: 'LK', icon: '💼', color: '#0077b5' },
+    twitter:   { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
+    youtube:   { name: 'YouTube',   abbr: 'YT', icon: '📺', color: '#ff0000' },
+    tiktok:    { name: 'TikTok',    abbr: 'TK', icon: '🎵', color: '#000000' },
+    telegram:  { name: 'Telegram',  abbr: 'TG', icon: '✈️', color: '#0088cc' },
     pinterest: { name: 'Pinterest', abbr: 'PI', icon: '📌', color: '#bd081c' },
-    whatsapp: { name: 'WhatsApp Business', abbr: 'WB', icon: '💬', color: '#25d366' },
-    discord: { name: 'Discord', abbr: 'DC', icon: '🎮', color: '#5865f2' },
-    forum: { name: 'Forum', abbr: 'FM', icon: '💭', color: '#ff6b35' }
+    whatsapp:  { name: 'WhatsApp Business', abbr: 'WB', icon: '💬', color: '#25d366' },
+    discord:   { name: 'Discord',   abbr: 'DC', icon: '🎮', color: '#5865f2' },
+    forum:     { name: 'Forum',     abbr: 'FM', icon: '💭', color: '#ff6b35' }
 };
 
 async function initApp() {
@@ -41,7 +41,9 @@ async function initApp() {
     
     injectCalendarStyles();
     initCalendar();
-    await loadPosts();
+    // NOTE: loadPosts() is no longer called here directly.
+    // The calendar's datesSet callback fires immediately on render and
+    // handles the initial load automatically.
     console.log('✅ App initialized');
 }
 
@@ -60,10 +62,13 @@ function injectCalendarStyles() {
             padding: 0 !important;
             overflow: visible !important;
         }
-        /* Ensure overlapping events split width evenly and stay readable */
-        .fc-timegrid-event-harness {
-            overflow: visible !important;
-        }
+
+        /*
+         * FIX #5A — DO NOT override .fc-timegrid-event-harness
+         * FullCalendar uses the harness to set left/right/width per event
+         * column via inline styles. Any CSS override here breaks side-by-side
+         * placement. Harness CSS removed entirely.
+         */
 
         /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
         .fc-event {
@@ -87,15 +92,15 @@ function initCalendar() {
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
-            left: 'prev,next today',
+            left:   'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right:  'dayGridMonth,timeGridWeek,timeGridDay'
         },
         slotMinTime: '07:00:00',
         slotMaxTime: '22:00:00',
-        editable: true,
-        selectable: true,
-        height: 'auto',
+        editable:    true,
+        selectable:  true,
+        height:      'auto',
         initialDate: new Date(),
         nowIndicator: true,
         defaultTimedEventDuration: '00:30',
@@ -103,10 +108,22 @@ function initCalendar() {
         dayMaxEventRows: false,
         eventOrder: 'start',
         eventOverlap: true,
+
+        // FIX #5B — false = FullCalendar splits overlapping events into
+        // true side-by-side columns instead of cascading/stacking them.
+        slotEventOverlap: false,
+
         displayEventTime: true,
-        slotEventOverlap: true,
+
+        // ── FIX #4: datesSet fires on every view/navigation change ────────────
+        // This replaces the one-time month calculation in initApp().
+        // FullCalendar passes the exact visible range (info.startStr / info.endStr)
+        // so we always fetch exactly what is on screen.
+        datesSet: async function(info) {
+            await loadPosts(info.startStr, info.endStr);
+        },
+
         viewDidMount: function(info) {
-            // When switching to day view, always jump to today
             if (info.view.type === 'timeGridDay') {
                 calendar.today();
             }
@@ -118,22 +135,20 @@ function initCalendar() {
             openEditPostModal(info.event.id);
         },
         eventDrop: async function(info) {
-            const postId  = info.event.id;
-            const startStr = info.event.startStr; // e.g. "2025-01-15T14:30:00"
+            const postId   = info.event.id;
+            const startStr = info.event.startStr;
             const newDate  = startStr.split('T')[0];
-            // Extract time if present (week/day view drag gives a full datetime)
             const newTime  = startStr.includes('T') ? startStr.split('T')[1].substring(0, 5) : null;
             await updatePostDateTime(postId, newDate, newTime);
         },
         eventContent: function(arg) {
-            const post = arg.event.extendedProps;
+            const post     = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
-            const view = calendar.view.type;
+            const view     = calendar.view.type;
 
             // ── Per-view sizing ────────────────────────────────────────────────
             const isMonth = view === 'dayGridMonth';
             const isWeek  = view === 'timeGridWeek';
-            const isDay   = view === 'timeGridDay';
 
             let fontSize, timeFontSize, badgeFontSize, padding, showTime;
 
@@ -159,9 +174,8 @@ function initCalendar() {
             }
 
             // ── Dark purple transparent glassmorphism card ─────────────────────
-            // #2d1b4e = rgb(45,27,78) — matches the app's "Medium Purple (Cards)"
-            const bg = 'rgba(45, 27, 78, 0.72)';
-            const leftBorder = platform.color;
+            const bg          = 'rgba(45, 27, 78, 0.72)';
+            const leftBorder  = platform.color;
 
             let html = `
                 <div style="
@@ -170,7 +184,7 @@ function initCalendar() {
                     gap: 2px;
                     padding: ${padding};
                     width: 100%;
-                    height: auto;
+                    height: 100%;
                     box-sizing: border-box;
                     background: ${bg};
                     backdrop-filter: blur(6px);
@@ -179,7 +193,7 @@ function initCalendar() {
                     border-left: 3px solid ${leftBorder};
                     border: 1px solid rgba(155, 89, 182, 0.25);
                     border-left: 3px solid ${leftBorder};
-                    overflow: visible;
+                    overflow: hidden;
                 ">
                     <div style="
                         font-size: ${fontSize};
@@ -221,21 +235,27 @@ function initCalendar() {
     calendar.render();
 }
 
-async function loadPosts() {
-    console.log('Loading posts...');
+// ── FIX #4: now accepts startStr / endStr from datesSet callback ──────────────
+// For localStorage fallback the date params are ignored (no range filtering needed
+// since localStorage volumes are small). Supabase uses the exact visible range.
+async function loadPosts(startStr, endStr) {
+    console.log('Loading posts...', startStr, '→', endStr);
     let posts = [];
     
-    // Try Supabase first
     if (supabaseAPI.initialized) {
         console.log('Supabase initialized, fetching from database');
-        const currentDate = calendar.getDate();
-        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const endOfMonth   = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-        
-        posts = await supabaseAPI.getPosts(
-            startOfMonth.toISOString().split('T')[0],
-            endOfMonth.toISOString().split('T')[0]
-        );
+
+        // FullCalendar's datesSet gives ISO strings with time component —
+        // we only need the date portion for the Supabase query.
+        const startDate = startStr ? startStr.split('T')[0] : null;
+        const endDate   = endStr   ? endStr.split('T')[0]   : null;
+
+        if (!startDate || !endDate) {
+            console.warn('⚠️ No date range provided to loadPosts');
+            return;
+        }
+
+        posts = await supabaseAPI.getPosts(startDate, endDate);
         console.log('Fetched', posts.length, 'posts from Supabase:', posts);
     } else {
         console.log('Supabase not initialized, using localStorage');
@@ -247,37 +267,29 @@ async function loadPosts() {
     console.log('Cleared all existing events');
     
     if (posts.length === 0) {
-        console.warn('⚠️ No posts to display');
+        console.warn('⚠️ No posts to display for this range');
         return;
     }
-
-    // ── Day-view same-time stacking fix ────────────────────────────────────────
-    // Track how many events share the same date + time slot.
-    // Each duplicate gets +3 min offset so FullCalendar renders them side-by-side
-    // rather than stacked. This is DISPLAY ONLY — stored data is never touched.
-    const timeUsage = {}; // key: "YYYY-MM-DD_HH:MM" → count of events seen so far
 
     posts.forEach(post => {
         const platform = PLATFORMS[post.platform] || { color: '#9b59b6' };
 
-        // Normalise the date
         let dateOnly = post.scheduled_date;
         if (dateOnly && dateOnly.includes('T')) {
             dateOnly = dateOnly.split('T')[0];
         }
 
-        // Build start — use exact stored time, no offset
         let startDateTime = dateOnly;
         if (post.scheduled_time) {
             startDateTime = `${dateOnly}T${post.scheduled_time}`;
         }
 
         calendar.addEvent({
-            id: post.id,
-            title: post.title || (post.content?.substring(0, 30) + '...'),
-            start: startDateTime,
+            id:              post.id,
+            title:           post.title || (post.content?.substring(0, 30) + '...'),
+            start:           startDateTime,
             backgroundColor: platform.color,
-            borderColor: platform.color,
+            borderColor:     platform.color,
             extendedProps: {
                 platform: post.platform,
                 title:    post.title,
@@ -298,10 +310,11 @@ function openCreatePostModal(date = null) {
     document.getElementById('deleteBtn').style.display = 'none';
     
     if (date) {
-        document.getElementById('scheduledDate').value = date;
+        // date may arrive as "2025-03-15T..." from a time-grid select — strip time
+        document.getElementById('scheduledDate').value = date.split('T')[0];
     }
     
-    document.getElementById('imagePreview').style.display = 'none';
+    // FIX #2 — imagePreview does not exist in the HTML modal; reference removed.
     document.getElementById('postModal').classList.add('active');
 }
 
@@ -328,7 +341,6 @@ async function openEditPostModal(postId) {
     document.getElementById('platform').value      = post.platform       || '';
     document.getElementById('title').value         = post.title          || '';
     document.getElementById('content').value       = post.content        || '';
-    // Normalise date — Supabase may return "2025-01-15T00:00:00.000Z", input needs "YYYY-MM-DD"
     const rawDate = post.scheduled_date || '';
     document.getElementById('scheduledDate').value = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
     document.getElementById('scheduledTime').value = post.scheduled_time || '';
@@ -341,7 +353,10 @@ function closePostModal() {
     document.getElementById('postModal').style.display = '';
 }
 
-async function handleImageUrlInput(event) {
+// FIX #2 — renamed from handleImageUrlInput to match the form's onsubmit="handlePostSubmit(event)"
+async function handlePostSubmit(event) {
+    event.preventDefault();
+
     const postId        = document.getElementById('postId').value;
     const platform      = document.getElementById('platform').value;
     const title         = document.getElementById('title').value;
@@ -369,7 +384,9 @@ async function handleImageUrlInput(event) {
         
         if (result.success) {
             closePostModal();
-            await loadPosts();
+            // Re-fetch the current visible range so the calendar stays in sync
+            const view  = calendar.view;
+            await loadPosts(view.activeStart.toISOString(), view.activeEnd.toISOString());
             alert(postId ? 'Post updated!' : 'Post created!');
         } else {
             alert('Failed to save post: ' + result.error);
@@ -389,7 +406,8 @@ async function handleImageUrlInput(event) {
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
         
         closePostModal();
-        await loadPosts();
+        const view = calendar.view;
+        await loadPosts(view.activeStart.toISOString(), view.activeEnd.toISOString());
         alert(postId ? 'Post updated!' : 'Post created!');
     }
 }
@@ -405,7 +423,8 @@ async function handleDeletePost() {
         
         if (result.success) {
             closePostModal();
-            await loadPosts();
+            const view = calendar.view;
+            await loadPosts(view.activeStart.toISOString(), view.activeEnd.toISOString());
             alert('Post deleted!');
         } else {
             alert('Failed to delete post');
@@ -416,13 +435,13 @@ async function handleDeletePost() {
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
         
         closePostModal();
-        await loadPosts();
+        const view = calendar.view;
+        await loadPosts(view.activeStart.toISOString(), view.activeEnd.toISOString());
         alert('Post deleted!');
     }
 }
 
 async function updatePostDateTime(postId, newDate, newTime) {
-    // Build update payload — always save date; only overwrite time if the drag gave us one
     const update = { scheduled_date: newDate };
     if (newTime) update.scheduled_time = newTime;
 
@@ -433,8 +452,9 @@ async function updatePostDateTime(postId, newDate, newTime) {
         posts = posts.map(p => p.id === postId ? { ...p, ...update } : p);
         localStorage.setItem('scheduledPosts', JSON.stringify(posts));
     }
-    // Reload so the card display time reflects the new position
-    await loadPosts();
+
+    const view = calendar.view;
+    await loadPosts(view.activeStart.toISOString(), view.activeEnd.toISOString());
 }
 
 window.addEventListener('load', initApp);
