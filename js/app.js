@@ -59,7 +59,7 @@ function injectCalendarStyles() {
     const style = document.createElement('style');
     style.id = '3c-calendar-styles';
     style.textContent = `
-        /* ── WEEK/DAY VIEW: natural column sizing, compact cards ─────────────── */
+        /* ── WEEK/DAY VIEW: compact cards ────────────────────────────────────── */
         .fc-timegrid-event {
             border-radius: 6px !important;
             min-height: 20px !important;
@@ -70,14 +70,7 @@ function injectCalendarStyles() {
             overflow: visible !important;
         }
 
-        /*
-         * FIX #5A — DO NOT override .fc-timegrid-event-harness
-         * FullCalendar uses the harness to set left/right/width per event
-         * column via inline styles. Any CSS override here breaks side-by-side
-         * placement. Harness CSS removed entirely.
-         */
-
-        /* ── ALL VIEWS: remove default FullCalendar event background ─────── */
+        /* ── ALL VIEWS: remove default FullCalendar event background ─────────── */
         .fc-event {
             background: transparent !important;
             border: none !important;
@@ -89,6 +82,71 @@ function injectCalendarStyles() {
         .fc-daygrid-event {
             white-space: normal !important;
             overflow: visible !important;
+        }
+
+        /*
+         * ── Manual column split classes ────────────────────────────────────────
+         * Applied to .fc-timegrid-event-harness via eventDidMount.
+         * Using !important ensures these survive FC's own post-mount inline styles.
+         *
+         * Formula: available=96%, gap=2%
+         *   width  = (96 - 2*(n-1)) / n
+         *   left-n = 2 + n*(width+2)
+         *
+         * col-1-of-1 : single event  → full width
+         * col-1-of-2 : 1st of 2      → left slot
+         * col-2-of-2 : 2nd of 2      → right slot
+         * col-1-of-3 : 1st of 3      → left slot
+         * col-2-of-3 : 2nd of 3      → centre slot
+         * col-3-of-3 : 3rd of 3      → right slot
+         */
+
+        /* 1 event */
+        .fc-timegrid-event-harness.c3-col-1-of-1 {
+            width: 96% !important;
+            left:  2%  !important;
+            right: auto !important;
+            inset-inline-start: 2%   !important;
+            inset-inline-end:   auto !important;
+        }
+
+        /* 2 events — each 47% with 2% gap */
+        .fc-timegrid-event-harness.c3-col-1-of-2 {
+            width: 47% !important;
+            left:  2%  !important;
+            right: auto !important;
+            inset-inline-start: 2%   !important;
+            inset-inline-end:   auto !important;
+        }
+        .fc-timegrid-event-harness.c3-col-2-of-2 {
+            width: 47% !important;
+            left:  51% !important;
+            right: auto !important;
+            inset-inline-start: 51%  !important;
+            inset-inline-end:   auto !important;
+        }
+
+        /* 3 events — each 30.67% with 2% gap */
+        .fc-timegrid-event-harness.c3-col-1-of-3 {
+            width: 30.67% !important;
+            left:  2%     !important;
+            right: auto   !important;
+            inset-inline-start: 2%   !important;
+            inset-inline-end:   auto !important;
+        }
+        .fc-timegrid-event-harness.c3-col-2-of-3 {
+            width: 30.67% !important;
+            left:  34.67% !important;
+            right: auto   !important;
+            inset-inline-start: 34.67% !important;
+            inset-inline-end:   auto   !important;
+        }
+        .fc-timegrid-event-harness.c3-col-3-of-3 {
+            width: 30.67% !important;
+            left:  67.33% !important;
+            right: auto   !important;
+            inset-inline-start: 67.33% !important;
+            inset-inline-end:   auto   !important;
         }
     `;
     document.head.appendChild(style);
@@ -116,9 +174,11 @@ function initCalendar() {
         eventOrder: 'start',
         eventOverlap: true,
 
-        // FIX #5B — false = FullCalendar splits overlapping events into
-        // true side-by-side columns instead of cascading/stacking them.
-        slotEventOverlap: false,
+        // slotEventOverlap: true (default) — MUST remain true.
+        // false tells FC "don't allow same-time events in the same slot" which
+        // causes it to physically push the 2nd event into the next day column.
+        // We handle visual separation manually via eventDidMount instead.
+        slotEventOverlap: true,
 
         displayEventTime: true,
 
@@ -264,22 +324,22 @@ function initCalendar() {
             if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
 
             const { colIndex, colTotal } = info.event.extendedProps;
-            if (!colTotal || colTotal <= 1) return; // single event — no override needed
+            const total = colTotal || 1;
+            const index = (colIndex ?? 0) + 1; // convert 0-based to 1-based
 
-            const gap       = 2;
-            const available = 96;
-            const width     = (available - gap * (colTotal - 1)) / colTotal;
-            const left      = 2 + colIndex * (width + gap);
-
-            // The harness is the FC element that controls event position/width
             const harness = info.el.closest('.fc-timegrid-event-harness');
             if (!harness) return;
 
-            harness.style.width              = `${width.toFixed(2)}%`;
-            harness.style.left               = `${left.toFixed(2)}%`;
-            harness.style.right              = 'auto';
-            harness.style.insetInlineStart   = `${left.toFixed(2)}%`;
-            harness.style.insetInlineEnd     = 'auto';
+            // Remove any previously applied c3-col class
+            harness.className = harness.className
+                .split(' ')
+                .filter(c => !c.startsWith('c3-col-'))
+                .join(' ');
+
+            // Apply the matching CSS class — !important rules in injectCalendarStyles
+            // override FC's own post-mount inline styles on the harness element.
+            const cls = `c3-col-${index}-of-${total}`;
+            harness.classList.add(cls);
         }
     });
     calendar.render();
