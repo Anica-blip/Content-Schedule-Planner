@@ -1,7 +1,13 @@
 # 3C Content Schedule Planner
 
-**Built by:** Chef Anica-blip for 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.6 (Anthropic)  
+This project is part of the 3C Thread To Success™ ecosystem — a growing digital platform that combines creativity, structure, and real-world application.
+
+The 3C Thread To Success™ brand, including its name, structure, characters (Aurion 3C Mascot), and overall system design, remains the intellectual property of the creator and is not included in this license.
+
+Commercial use of the brand or replication of the ecosystem identity is not permitted without permission.
+
+---
+
 **Live URL:** (https://anica-blip.github.io/Content-Schedule-Planner/index.html)
 
 A modern social media content calendar for scheduling posts across multiple platforms with Supabase database and GitHub Pages hosting.
@@ -124,9 +130,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Credits
 
-**Created by:** Chef Anica-blip  
-**Organisation:** 3C Thread To Success  
-**AI Assistant:** Claude Sonnet 4.6 by Anthropic  
 **Infrastructure:** GitHub Pages, Supabase  
 **Calendar Library:** FullCalendar.js  
 
@@ -136,7 +139,25 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Email:** 3c.innertherapy@gmail.com  
 **GitHub:** https://github.com/Anica-blip/Content-Schedule-Planner  
+
 ---
 
-**Built with 💎 by 3C Thread To Success**  
-**Powered by Claude Sonnet 4.6 (Anthropic)**
+*Designed and Built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success™ Cooking Lab*  🧪👨‍🍳
+
+"Think Smarter, Not Harder - Zero Shortcuts"
+
+---
+
+## 👤 Creator
+
+Anica-blip (“Chef”)
+Founder of 3C Thread To Success™ ("Cooking Lab")
+Independent Creator | Community Builder
+
+---
+
+🧠 Philosophy
+
+“Think it. Do it. Own it.”
+
+This project was built from vision, persistence, and a commitment to creating meaningful and structured experiences — even with minimal resources.
