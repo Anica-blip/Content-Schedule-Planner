@@ -189,7 +189,7 @@ function initCalendar() {
                 return { html: renderRecordCentreGroup(arg.event.extendedProps.records) };
             }
             if (arg.event.extendedProps.isRecordCentreSingle) {
-                return { html: renderRecordCentreCard(arg.event.extendedProps.record) };
+                return { html: renderRecordCentreTimedCard(arg.event.extendedProps.record) };
             }
 
             const post     = arg.event.extendedProps;
@@ -545,20 +545,33 @@ function addRecordCentreCardsToCalendar(records) {
         group.forEach((r, idx) => {
             const day = parseRecordCalendarDate(r.date);
             let start = day;
+            let end   = undefined;
             if (r.time) {
+                let hh, mm;
                 if (idx === 0) {
-                    start = `${day}T${r.time}`;
+                    [hh, mm] = r.time.split(':').map(Number);
                 } else {
-                    const [hh, mm] = r.time.split(':').map(Number);
-                    const totalMins = (hh || 0) * 60 + (mm || 0) + idx;
-                    const oh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
-                    const om = String(totalMins % 60).padStart(2, '0');
-                    start = `${day}T${oh}:${om}:00`;
+                    const [baseHH, baseMM] = r.time.split(':').map(Number);
+                    const totalMins = (baseHH || 0) * 60 + (baseMM || 0) + idx;
+                    hh = Math.floor(totalMins / 60) % 24;
+                    mm = totalMins % 60;
                 }
+                const oh = String(hh).padStart(2, '0');
+                const om = String(mm).padStart(2, '0');
+                start = `${day}T${oh}:${om}:00`;
+
+                // Explicit end — 45 minutes gives enough box height for the
+                // four-line layout without relying on a default duration
+                // setting that may not apply in this code path.
+                const endTotalMins = hh * 60 + mm + 90;
+                const eh = String(Math.floor(endTotalMins / 60) % 24).padStart(2, '0');
+                const em = String(endTotalMins % 60).padStart(2, '0');
+                end = `${day}T${eh}:${em}:00`;
             }
             calendar.addEvent({
                 id: `rc-single-${r.id}`,
                 start,
+                end,
                 allDay: !r.time,
                 classNames: ['rc-single-event'],
                 extendedProps: {
@@ -600,8 +613,8 @@ function renderRecordCentreCard(r) {
     // Real eye/view icon — same SVG as icons.js's icon('view').
     const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
-    // Date dropped deliberately — the day cell's own number already shows
-    // it, repeating it just ate space a square doesn't have to spare.
+    const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
+
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
             flex: 0 0 calc(50% - 2px);
@@ -619,19 +632,87 @@ function renderRecordCentreCard(r) {
                 background: ${meta.colour};
                 color: ${meta.font};
                 font-weight: 700;
-                font-size: 9px;
-                padding: 2px 4px;
+                font-size: 8px;
+                padding: 1px 3px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 flex-shrink: 0;
             ">${r.category || 'Untitled'}</div>
-            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:4px; padding:2px;">
-                ${r.time ? `<span style="font-size:8px; color:rgba(232,213,255,0.9); font-weight:600;">${r.time}</span>` : ''}
-                ${platformBadges}
-                <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px;">
+                <div style="font-size:7px; color:rgba(232,213,255,0.9); line-height:1.2;">${dayLabel}</div>
+                <div style="font-size:7px; color:rgba(232,213,255,0.9); font-weight:600; line-height:1.2;">${r.time || ''}</div>
+                <div style="display:flex; align-items:center; gap:2px; margin-top:1px;">
+                    ${platformBadges}
+                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
+                </div>
             </div>
         </div>`;
+}
+
+// Week/Day view — real vertical room in a time-slot row, unlike month
+// view's tiny square, so this stacks Category / Day / Time / Platform+eye
+// as four separate lines instead of compressing everything into two.
+// Month view's renderRecordCentreCard() above is untouched by this.
+function renderRecordCentreTimedCard(r) {
+    const meta     = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
+    const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
+
+    const platformBadges = (r.platforms || []).map(p => {
+        const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
+        return `<span style="
+            background: ${info.color};
+            color: #fff;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-right: 4px;
+            white-space: nowrap;
+        ">${info.abbr}</span>`;
+    }).join('');
+
+    const eyeIcon = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+    return `
+        <div class="rc-card" data-record-id="${r.id}" style="
+            width: 100%;
+            max-width: 170px;
+            height: 100%;
+            box-sizing: border-box;
+            background: rgba(45, 27, 78, 0.85);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        ">
+            <div style="
+                background: ${meta.colour};
+                color: ${meta.font};
+                font-weight: 700;
+                font-size: 13px;
+                padding: 4px 7px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex-shrink: 0;
+            ">${r.category || 'Untitled'}</div>
+            <div style="padding: 4px 7px; color: rgba(232,213,255,0.9); line-height: 1.6; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 12px;">${dayLabel}</div>
+                <div style="font-size: 12px;">${r.time || ''}</div>
+                <div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
+                    ${platformBadges}
+                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
+                </div>
+            </div>
+        </div>`;
+}
+
+function formatDayLabel(isoDateStr) {
+    const d = new Date(isoDateStr + 'T00:00:00');
+    if (isNaN(d)) return isoDateStr || '';
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 // Full calendar-day parser. numbering.js's parseDateParts() only returns
