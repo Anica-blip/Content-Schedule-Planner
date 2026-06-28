@@ -429,10 +429,11 @@ async function loadAndRenderRecordCentreCards(startStr, endStr) {
 }
 
 async function fetchRecordCentreRecords(startStr, endStr) {
-    // getRecordCentreToken() comes from auth.js — not built yet. Until it
-    // exists this returns [] every time, which is expected, not a bug.
     const token = typeof getRecordCentreToken === 'function' ? getRecordCentreToken() : null;
-    if (!token) return [];
+    if (!token) {
+        console.warn('⚠️ No Record Centre token — skipping live fetch');
+        return [];
+    }
 
     try {
         const res = await fetch(`${RECORD_CENTRE_API}/api/records`, {
@@ -443,12 +444,16 @@ async function fetchRecordCentreRecords(startStr, endStr) {
             return [];
         }
         const records  = await res.json();
+        console.log('✅ Record Centre returned', records.length, 'total record(s)');
+
         const startDate = startStr.split('T')[0];
         const endDate   = endStr.split('T')[0];
-        return records.filter(r => {
+        const inRange = records.filter(r => {
             const day = parseRecordCalendarDate(r.date);
-            return r.scheduled && day && day >= startDate && day <= endDate;
+            return day && day >= startDate && day <= endDate;
         });
+        console.log('✅', inRange.length, 'fall within', startDate, '→', endDate);
+        return inRange;
     } catch (err) {
         console.warn('⚠️ Record Centre fetch error:', err);
         return [];
@@ -467,6 +472,8 @@ function addRecordCentreCardsToCalendar(records) {
         if (!day) return;
         (byDay[day] = byDay[day] || []).push(r);
     });
+
+    console.log('✅ Adding', Object.keys(byDay).length, 'day-group(s) to the calendar:', Object.keys(byDay));
 
     Object.entries(byDay).forEach(([day, dayRecords]) => {
         dayRecords.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
