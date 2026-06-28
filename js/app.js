@@ -523,7 +523,7 @@ function renderRecordCentreCard(r) {
             border: 1px solid rgba(155, 89, 182, 0.25);
             border-radius: 6px;
             overflow: hidden;
-            min-height: 74px;
+            min-height: 58px;
             display: flex;
             flex-direction: column;
         ">
@@ -538,10 +538,7 @@ function renderRecordCentreCard(r) {
                 text-overflow: ellipsis;
             ">${r.category || 'Untitled'}</div>
             <div style="padding: 4px 6px; color: rgba(232,213,255,0.85); line-height: 1.4; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="font-size: 10px;">${dayDate}</div>
-                    ${r.time ? `<div style="font-size: 10px;">${r.time}</div>` : ''}
-                </div>
+                <div style="font-size: 10px;">${dayDate}${r.time ? ' · ' + r.time : ''}</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:3px; margin-top:3px;">
                     <div style="display:flex; flex-wrap:wrap;">${platformBadges}</div>
                     <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
