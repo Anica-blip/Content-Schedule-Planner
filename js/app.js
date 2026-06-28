@@ -28,6 +28,16 @@ const PLATFORMS = {
     forum:     { name: 'Forum',     abbr: 'FM', icon: '💭', color: '#ff6b35' }
 };
 
+// Record Centre format colours — must match Record Centre exactly, confirmed
+// in both repos' SETUP.md.
+const FORMAT_COLOURS = {
+    SV: '#5e17eb',
+    LV: '#ffbc66',
+    PC: '#03e493'
+};
+
+const RECORD_CENTRE_API = 'https://recordmanagement.threadcommand.center';
+
 async function initApp() {
     console.log('🚀 Initializing 3C Content Schedule Planner...');
     
@@ -133,6 +143,7 @@ function initCalendar() {
             clearTimeout(_datesSetTimer);
             _datesSetTimer = setTimeout(async () => {
                 await loadPosts(info.startStr, info.endStr);
+                await loadAndRenderRecordCentreCards(info.startStr, info.endStr);
             }, 150);
         },
 
@@ -155,6 +166,12 @@ function initCalendar() {
             await updatePostDateTime(postId, newDate, newTime);
         },
         eventContent: function(arg) {
+            // ── Record Centre cards — separate render path. Manual-post
+            // logic below this block is completely unchanged. ──────────────
+            if (arg.event.extendedProps.isRecordCentreGroup) {
+                return { html: renderRecordCentreGroup(arg.event.extendedProps.records) };
+            }
+
             const post     = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
             const view     = calendar.view.type;
@@ -252,6 +269,20 @@ function initCalendar() {
         //       which is always painted before eventDidMount fires — gives a
         //       reliable non-zero offsetWidth unlike harness.parentElement.
         eventDidMount: function(info) {
+            // ── Record Centre cards — wire up eye-icon clicks, then stop.
+            // The timeGrid side-by-side positioning hack below is for the
+            // manual-post path only and never runs for these. ───────────────
+            if (info.event.extendedProps.isRecordCentreGroup) {
+                info.el.querySelectorAll('.rc-eye-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const card = btn.closest('.rc-card');
+                        if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
+                    });
+                });
+                return;
+            }
+
             const view = info.view.type;
             if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
 
@@ -386,6 +417,169 @@ async function loadPosts(startStr, endStr) {
     
     console.log('✅ Finished loading', posts.length, 'posts to calendar');
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// ── Record Centre integration — live cards, separate from manual posts ──
+// ════════════════════════════════════════════════════════════════════════
+// Read-only here: created and edited only in Record Centre, just displayed
+// on this calendar. Never written back from the Planner.
+
+async function loadAndRenderRecordCentreCards(startStr, endStr) {
+    const records = await fetchRecordCentreRecords(startStr, endStr);
+    addRecordCentreCardsToCalendar(records);
+}
+
+async function fetchRecordCentreRecords(startStr, endStr) {
+    // getRecordCentreToken() comes from auth.js — not built yet. Until it
+    // exists this returns [] every time, which is expected, not a bug.
+    const token = typeof getRecordCentreToken === 'function' ? getRecordCentreToken() : null;
+    if (!token) return [];
+
+    try {
+        const res = await fetch(`${RECORD_CENTRE_API}/api/records`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            console.warn('⚠️ Record Centre fetch failed:', res.status);
+            return [];
+        }
+        const records  = await res.json();
+        const startDate = startStr.split('T')[0];
+        const endDate   = endStr.split('T')[0];
+        return records.filter(r => {
+            const day = parseRecordDate(r.date);
+            return day && day >= startDate && day <= endDate;
+        });
+    } catch (err) {
+        console.warn('⚠️ Record Centre fetch error:', err);
+        return [];
+    }
+}
+
+function addRecordCentreCardsToCalendar(records) {
+    // Group by day — one FullCalendar event per day, holding every Record
+    // Centre card for that day. The 2-up wrap grid lives entirely inside
+    // that single event's own HTML, so FullCalendar never has to stack
+    // multiple harnesses on the same day — that stacking is exactly what
+    // broke before. This sidesteps it rather than re-solving it.
+    const byDay = {};
+    records.forEach(r => {
+        const day = parseRecordDate(r.date);
+        if (!day) return;
+        (byDay[day] = byDay[day] || []).push(r);
+    });
+
+    Object.entries(byDay).forEach(([day, dayRecords]) => {
+        dayRecords.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        calendar.addEvent({
+            id: `rc-group-${day}`,
+            start: day,
+            allDay: true,
+            extendedProps: { isRecordCentreGroup: true, records: dayRecords }
+        });
+    });
+}
+
+function renderRecordCentreGroup(records) {
+    return `<div style="display:flex; flex-wrap:wrap; gap:3px; width:100%;">
+        ${records.map(renderRecordCentreCard).join('')}
+    </div>`;
+}
+
+function renderRecordCentreCard(r) {
+    const formatColour = FORMAT_COLOURS[r.format] || '#9b59b6';
+    const platformName = (r.platforms || [])[0] || '';
+    const platformInfo = PLATFORMS[platformName.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
+    const dayDate       = formatDayDate(r.date);
+
+    return `
+        <div class="rc-card" data-record-id="${r.id}" style="
+            flex: 0 0 calc(50% - 2px);
+            box-sizing: border-box;
+            background: rgba(45, 27, 78, 0.72);
+            border: 1px solid rgba(155, 89, 182, 0.25);
+            border-radius: 5px;
+            overflow: hidden;
+        ">
+            <div style="
+                background: ${formatColour};
+                color: #fff;
+                font-weight: 700;
+                font-size: 8px;
+                padding: 2px 4px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">${r.category || 'Untitled'}</div>
+            <div style="padding: 2px 4px; color: rgba(232,213,255,0.85); line-height: 1.3;">
+                <div style="font-size: 7px;">${dayDate}</div>
+                ${r.time ? `<div style="font-size: 7px;">${r.time}</div>` : ''}
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1px;">
+                    <span style="
+                        background: ${platformInfo.color};
+                        color: #fff;
+                        font-weight: 700;
+                        font-size: 7px;
+                        padding: 1px 4px;
+                        border-radius: 3px;
+                    ">${platformInfo.abbr}</span>
+                    <span class="rc-eye-btn" style="cursor:pointer; font-size:9px;" title="View content">👁️</span>
+                </div>
+            </div>
+        </div>`;
+}
+
+// TEMP — handles ISO dates (YYYY-MM-DD) only, enough for the test data
+// below. Record Centre's real dates are free-typed text (e.g. "Thu
+// 25.06"), already fixed there by numbering.js's parseDateParts(). Send
+// me that function and this gets swapped for the real thing — not
+// rewritten blind, that's the exact bug that already cost time once.
+function parseRecordDate(dateStr) {
+    const match = dateStr?.match(/^\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : null;
+}
+
+function formatDayDate(isoDateStr) {
+    const d = new Date(isoDateStr + 'T00:00:00');
+    if (isNaN(d)) return isoDateStr || '';
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+async function openRecordCentreCardView(recordId) {
+    const token = typeof getRecordCentreToken === 'function' ? getRecordCentreToken() : null;
+    if (!token) {
+        alert('Not connected to Record Centre yet — auth.js needs to be in place first.');
+        return;
+    }
+    try {
+        const res = await fetch(`${RECORD_CENTRE_API}/api/records/${encodeURIComponent(recordId)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Record not found or not authorised');
+        const record = await res.json();
+        // Placeholder popup — swap for Record Centre's actual Card 1 markup
+        // once shared, so it matches exactly rather than being a second,
+        // slightly-different version of the same view.
+        alert(`${record.category || 'Untitled'}\n${record.title || ''}`);
+    } catch (err) {
+        alert('Could not load this record: ' + err.message);
+    }
+}
+
+// Console-testable today, no Record Centre session needed:
+// open devtools (F12) → console → type testRecordCentreCards() → enter.
+// Mirrors your screenshot: two cards sharing a 17:00 on one day, one card
+// the next day — exactly the case that needs to wrap 2-up, not stack.
+// Delete this whole function once live data is flowing.
+window.testRecordCentreCards = function() {
+    addRecordCentreCardsToCalendar([
+        { id: 'test-1', category: 'Campaign Launch',   format: 'SV', date: '2026-06-21', time: '17:00', platforms: ['Telegram']  },
+        { id: 'test-2', category: 'Behind the Scenes', format: 'LV', date: '2026-06-21', time: '17:00', platforms: ['TikTok']    },
+        { id: 'test-3', category: 'Weekly Recap',       format: 'PC', date: '2026-06-21', time: '19:00', platforms: ['Pinterest'] },
+        { id: 'test-4', category: 'Q&A Session',        format: 'SV', date: '2026-06-22', time: '12:00', platforms: ['Youtube']   }
+    ]);
+    console.log('✅ Test Record Centre cards added — make sure the calendar is showing June 2026.');
+};
 
 function openCreatePostModal(date = null) {
     currentPost = null;
