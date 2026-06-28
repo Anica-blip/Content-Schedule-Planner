@@ -50,7 +50,7 @@ body {
 .container { 
     max-width: 1400px; 
     margin: 2rem auto; 
-    padding: 0 2rem;
+    padding: 0 0.5rem;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -60,7 +60,7 @@ body {
     background: rgba(45, 27, 78, 0.6);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 2rem;
+    padding: 0.75rem;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     display: block !important;
     visibility: visible !important;
