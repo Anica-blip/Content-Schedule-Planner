@@ -64,7 +64,8 @@
 
 .record-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
+  min-height: 520px;
   max-height: 90vh;
   background: var(--rc-bg-card);
   border-radius: var(--rc-radius-lg);
@@ -73,6 +74,33 @@
   flex-direction: column;
   box-shadow: var(--rc-shadow-card);
   font-family: var(--rc-font);
+}
+
+/* ── Record Centre calendar chips — override the Planner's own fixed-size
+   month-view rule (styles.css: .fc-daygrid-event { width:95px; height:60px;
+   !important }), which was written for manual posts and applies globally
+   by default. More specific selector + !important wins regardless of file
+   order, so manual posts keep their fixed size and these don't. ───────── */
+.fc-daygrid-event.rc-group-event {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Same override, week/day view — styles.css fixes .fc-timegrid-event to a
+   flat 50x50px for manual posts. Record Centre's individual timed chips
+   need to fill whatever width the colIndex/colTotal positioning gives
+   their harness, not a fixed square. */
+.fc-timegrid-event.rc-single-event {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 @media (max-width: 720px) {
