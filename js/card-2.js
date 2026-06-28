@@ -6,7 +6,7 @@
 // can run longer than the card, so the body scrolls.
 
 import { icon } from './icons.js?v=13';
-import { formatCardHeaderForPlatform } from './numbering.js?v=13';
+import { formatCardHeaderForPlatform } from './numbering.js?v=14';
 
 export function renderCard2(draft, viewingPlatform) {
   const headerId = draft.id ? formatCardHeaderForPlatform(draft, viewingPlatform) : 'NEW RECORD';
