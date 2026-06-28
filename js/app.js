@@ -566,7 +566,7 @@ function addRecordCentreCardsToCalendar(records) {
 }
 
 function renderRecordCentreGroup(records) {
-    return `<div style="display:flex; flex-wrap:wrap; gap:3px; width:100%;">
+    return `<div style="display:flex; flex-wrap:wrap; gap:3px; width:100%; align-items:flex-start; align-content:flex-start;">
         ${records.map(renderRecordCentreCard).join('')}
     </div>`;
 }
@@ -597,6 +597,7 @@ function renderRecordCentreCard(r) {
         <div class="rc-card" data-record-id="${r.id}" style="
             flex: 0 0 calc(50% - 2px);
             aspect-ratio: 1 / 1;
+            align-self: flex-start;
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
             border: 1px solid rgba(155, 89, 182, 0.3);
