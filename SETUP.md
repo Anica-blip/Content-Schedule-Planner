@@ -60,17 +60,17 @@ Content that isn't part of the 3C ecosystem must still be addable manually — t
 
 ## 5. Today's Work — Toolbar Icon Swap (Done)
 
-Replaced three emoji with inline SVG icons, colour `#4ECDC4` (clean cyan, reads well against the dark purple theme):
+Replaced two emoji with inline SVG icons, colour `#4ECDC4` (clean cyan, reads well against the dark purple theme):
 
 | Was | Now | Used for |
 |---|---|---|
 | 🔊 | Megaphone icon | Create New Post (manual) |
-| 💎 | Compass icon | Navigation menu toggle |
+| 🔗 | Compass icon | Manage Navigation Links |
 | 🚪 | Door + arrow icon | Sign Out |
 
-Icons were hand-drawn as SVG from Chef's reference image, not pulled directly from the Canva file — Claude's sandbox can't fetch files from Canva's domain. Visually close, not pixel-identical to the original Canva assets.
+**The floating diamond toggle button (`#nav-toggle-btn`, opens the slide-out nav panel) was never part of this and stays exactly as it was — plain 💎 emoji, original `nav-toggle.css` background-image setup untouched.** An earlier draft of this work mistakenly swapped this button's icon too; reverted in full. If this button's icon is ever genuinely meant to change, note for next time: `nav-toggle.css` hides text/emoji via `font-size: 0 !important` and shows the real icon as a `background-image: url('../public/none.webp')` — not emoji, not inline content. Any future icon change here needs that background-image approach removed first, or the new icon will silently never show.
 
-**Real gotcha hit and fixed — worth not rediscovering:** `#nav-toggle-btn` (the compass button) wasn't actually showing the 💎 emoji at all. `nav-toggle.css` had `font-size: 0 !important` (hiding any text/emoji) plus `background-image: url('../public/none.webp')` — the icon was a **background image file**, not emoji or inline content. Any new icon attempt on this specific button must remove that background-image approach first, or it'll silently never show. Already fixed for the compass icon; if this button's icon changes again later, check this file first.
+Icons were hand-drawn as SVG from Chef's reference image, not pulled directly from the Canva file — Claude's sandbox can't fetch files from Canva's domain. Visually close, not pixel-identical to the original Canva assets.
 
 **Versioning note — this repo uses a different convention than Record Centre's.** Here it's semantic-style strings (`?v=1.1.5`), not Record Centre's incrementing integer (`?v=11`). Don't mix the two conventions across repos — follow whichever pattern is already in the file being edited.
 
