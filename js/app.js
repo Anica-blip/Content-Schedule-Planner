@@ -164,6 +164,15 @@ function initCalendar() {
             openCreatePostModal(info.startStr);
         },
         eventClick: function(info) {
+            // Record Centre chips never go to the manual-post editor — that's
+            // the actual bug that caused "Failed to load post". Clicking
+            // anywhere on the square now opens the card, not just the
+            // small eye icon, since that's a more reliable target at this size.
+            if (info.event.extendedProps.isRecordCentreGroup || info.event.extendedProps.isRecordCentreSingle) {
+                const card = info.jsEvent.target.closest('.rc-card');
+                if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
+                return;
+            }
             openEditPostModal(info.event.id);
         },
         eventDrop: async function(info) {
