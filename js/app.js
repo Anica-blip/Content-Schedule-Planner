@@ -101,6 +101,22 @@ function injectCalendarStyles() {
             overflow: visible !important;
         }
 
+        /* ── MONTH VIEW: Record Centre day-group squares ─────────────────────
+         * The old fixed-size rule above (60×95px, written for the original
+         * tiny manual-post chips) still applies here too, since FullCalendar
+         * tags every month-view event with .fc-daygrid-event regardless of
+         * our own classNames. That cap was squeezing the 2-up squares down
+         * to emoji size and made a 2nd row of cards physically impossible —
+         * there was no room. A more specific selector wins this override. */
+        .fc-daygrid-event.rc-group-event {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 80px !important;
+            max-height: none !important;
+            max-width: none !important;
+            min-width: 0 !important;
+        }
+
         /*
          * 2B: FC renders the grid background only.
          * Container placement for week/day is handled entirely by our
@@ -588,7 +604,7 @@ function addRecordCentreCardsToCalendar(records) {
 }
 
 function renderRecordCentreGroup(records) {
-    return `<div style="display:flex; flex-wrap:wrap; gap:3px; width:100%; align-items:flex-start; align-content:flex-start;">
+    return `<div style="display:flex; flex-wrap:wrap; gap:5px; width:100%; align-items:flex-start; align-content:flex-start;">
         ${records.map(renderRecordCentreCard).join('')}
     </div>`;
 }
@@ -617,7 +633,7 @@ function renderRecordCentreCard(r) {
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            flex: 0 0 calc(50% - 2px);
+            flex: 0 0 calc(50% - 2.5px);
             aspect-ratio: 1 / 1;
             align-self: flex-start;
             box-sizing: border-box;
