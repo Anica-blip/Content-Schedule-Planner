@@ -23,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Upgraded from 6.1.10 → 6.1.19 (latest stable, no breaking changes) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=1.1.4">
+    <link rel="stylesheet" href="css/styles.css?v=1.1.5">
     <link rel="stylesheet" href="css/navigation.css?v=1.0.5">
     <link rel="stylesheet" href="css/nav-toggle.css">
     
@@ -43,14 +43,17 @@
             <button id="supabase-indicator" class="btn btn-traffic-light" title="Supabase Connection">
                 🚦
             </button>
-            <button class="btn btn-speaker" onclick="openCreatePostModal()" title="Create New Post">
-                🔊
+            <a href="https://anica-blip.github.io/3c-content-record-centre/" target="_blank" rel="noopener noreferrer" class="btn btn-icon-svg" title="Open 3C Content Record Centre">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 9v4l3 2"/><path d="M19.4 7.5a9 9 0 1 1-2-3" stroke-dasharray="1 3"/></svg>
+            </a>
+            <button class="btn btn-icon-svg" onclick="openCreatePostModal()" title="Create New Post">
+                <svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M16 8a4 4 0 0 1 0 8M19 5a8 8 0 0 1 0 14"/></svg>
             </button>
             <button class="btn btn-speaker" onclick="window.location.href='links-manager.html'" title="Manage Navigation Links">
                 🔗
             </button>
-            <button id="signout-btn" class="btn btn-speaker" onclick="signOut()" title="Sign Out">
-                🚪
+            <button id="signout-btn" class="btn btn-icon-svg" onclick="signOut()" title="Sign Out">
+                <svg viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 16l5-5-5-5M20 11H9"/></svg>
             </button>
         </div>
     </header>
@@ -90,8 +93,8 @@
 
     <!-- Navigation Toggle Container near Calendar -->
     <div id="nav-toggle-container">
-        <button id="nav-toggle-btn" onclick="toggleNavPanel()" title="Navigation Menu">
-            💎
+        <button id="nav-toggle-btn" class="btn-icon-svg" onclick="toggleNavPanel()" title="Navigation Menu">
+            <svg viewBox="0 0 24 24"><path d="M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9"/><path d="M12 7l3 5-3 5-3-5Z"/></svg>
         </button>
     </div>
 
