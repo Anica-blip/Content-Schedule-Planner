@@ -349,6 +349,34 @@ body {
     transform: scale(1.15);
 }
 
+/* SVG icon buttons — Schedule, Navigation menu, Exit, and the new
+   Record Centre link. Same transparent/no-container pattern as the
+   emoji buttons above, just sized and coloured for line-art SVGs
+   instead of font-size emoji. */
+.btn-icon-svg {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.btn-icon-svg svg {
+    width: 32px;
+    height: 32px;
+    stroke: #4ECDC4;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.btn-icon-svg:hover { transform: scale(1.15); }
+
 /* Make New Post button square */
 .btn-create {
     width: 110px;
