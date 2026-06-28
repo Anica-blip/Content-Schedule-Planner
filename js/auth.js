@@ -1,113 +1,86 @@
 /**
- * Authentication module for 3C Content Schedule Planner
- * Handles login, logout, and session management with Supabase
+ * auth.js — Record Centre session for the Content Schedule Planner
+ * 3C Content Schedule Planner · 3C Thread To Success™
+ *
+ * Plain global script, not an ES module — matches every other file in
+ * this repo (app.js, supabaseAPI.js).
+ *
+ * Mirrors Record Centre's own auth.js exactly: same token, same storage
+ * key, same Bearer pattern. The one difference is redirectToLogin() adds
+ * ?app=planner, so the Worker's /auth/callback knows to send the token
+ * back here instead of to Record Centre's own front-end.
  */
 
-let supabaseClient = null;
+const RC_API_BASE  = 'https://recordmanagement.threadcommand.center';
+const RC_TOKEN_KEY = '3c_session_token'; // must match Record Centre exactly
 
-function initSupabase() {
-    const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
-    const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '';
-    
-    if (url && key && url !== '' && key !== '') {
-        try {
-            supabaseClient = supabase.createClient(url, key);
-            console.log('✅ Supabase initialized');
-            return true;
-        } catch (error) {
-            showError('Check config.js credentials');
-            return false;
-        }
-    } else {
-        showError('Configure config.js');
-        return false;
-    }
+function getRecordCentreToken() {
+    return localStorage.getItem(RC_TOKEN_KEY);
 }
 
-// Check if user is already logged in
-async function checkSession() {
-    if (!supabaseClient) {
-        if (!initSupabase()) return false;
-    }
-    
-    try {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        
-        if (error) throw error;
-        
-        if (session) {
-            console.log('✅ User already logged in');
-            // Redirect to main app
-            window.location.href = 'index.html';
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('❌ Session check failed:', error);
-        return false;
-    }
+function setRecordCentreToken(token) {
+    localStorage.setItem(RC_TOKEN_KEY, token);
 }
 
-async function loginWithGitHub() {
-    if (!supabaseClient && !initSupabase()) return;
-    
-    const btn = document.getElementById('github-login-btn');
-    btn.disabled = true;
-    btn.textContent = 'Redirecting...';
-    
+function clearRecordCentreToken() {
+    localStorage.removeItem(RC_TOKEN_KEY);
+}
+
+// Catches the token handed back in the URL fragment (#token=...) after
+// the GitHub OAuth round trip, then cleans the URL so it doesn't linger.
+function captureRecordCentreTokenFromUrl() {
+    if (!window.location.hash.startsWith('#token=')) return;
+    const token = window.location.hash.slice('#token='.length);
+    setRecordCentreToken(token);
+    history.replaceState(null, '', window.location.pathname);
+}
+
+async function checkRecordCentreSession() {
+    captureRecordCentreTokenFromUrl();
+    const token = getRecordCentreToken();
+    if (!token) return null;
+
     try {
-        // Use current URL path to handle both GitHub Pages and custom domains
-        const currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-        const redirectUrl = window.location.origin + currentPath + '/index.html';
-        
-        const { error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'github',
-            options: { redirectTo: redirectUrl }
+        const res = await fetch(`${RC_API_BASE}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
-        if (error) throw error;
-    } catch (error) {
-        showError(error.message);
-        btn.disabled = false;
-        btn.textContent = 'GitHub Access Connection';
+        if (!res.ok) {
+            clearRecordCentreToken();
+            return null;
+        }
+        const data = await res.json();
+        return data.user;
+    } catch {
+        return null;
     }
 }
 
-// Show error message
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    const successDiv = document.getElementById('success-message');
-    
-    successDiv.classList.remove('show');
-    errorDiv.textContent = message;
-    errorDiv.classList.add('show');
-    
-    setTimeout(() => {
-        errorDiv.classList.remove('show');
-    }, 5000);
+// Guard for index.html — redirects to login.html if there's no valid
+// session. Call this before rendering anything else.
+async function requireRecordCentreSession() {
+    const user = await checkRecordCentreSession();
+    if (!user) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return user;
 }
 
-// Show success message
-function showSuccess(message) {
-    const errorDiv = document.getElementById('error-message');
-    const successDiv = document.getElementById('success-message');
-    
-    errorDiv.classList.remove('show');
-    successDiv.textContent = message;
-    successDiv.classList.add('show');
-    
-    setTimeout(() => {
-        successDiv.classList.remove('show');
-    }, 5000);
+// Guard for login.html itself — skip straight to the app if already logged in.
+async function redirectIfRecordCentreLoggedIn() {
+    const user = await checkRecordCentreSession();
+    if (user) {
+        window.location.href = 'index.html';
+    }
 }
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if already logged in
-    checkSession();
-    
-    // Initialize Supabase
-    initSupabase();
-    
-    // GitHub login button
-    document.getElementById('github-login-btn').addEventListener('click', loginWithGitHub);
-});
+// ?app=planner is read by the Worker's handleLogin() to know which
+// front-end to bounce the token back to after GitHub auth completes.
+function redirectToRecordCentreLogin() {
+    window.location.href = `${RC_API_BASE}/auth/login?app=planner`;
+}
+
+function logoutRecordCentre() {
+    clearRecordCentreToken();
+    window.location.href = 'login.html';
+}
