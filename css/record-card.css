@@ -263,3 +263,14 @@
   flex-shrink: 0;
 }
 .record-link-row button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── Form-field font fix ─────────────────────────────────────
+   Inputs/textareas/selects don't inherit font-family by default in
+   any browser — Record Centre's real style.css fixes this globally;
+   scoped here to .record-card only, so it can't touch the Planner's
+   own modal form fields elsewhere on the page. */
+.record-card input[type="text"],
+.record-card textarea,
+.record-card select {
+  font-family: var(--rc-font);
+}
