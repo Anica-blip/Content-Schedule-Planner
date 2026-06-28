@@ -28,55 +28,16 @@ const PLATFORMS = {
     forum:     { name: 'Forum',     abbr: 'FM', icon: '💭', color: '#ff6b35' }
 };
 
-// ── Mirrors Record Centre's numbering.js exactly (file confirmed 2026-06-28).
-// Copied rather than imported: app.js is a plain script, not an ES module,
-// and the inline onsubmit="..." handlers in index.html need these functions
-// to stay on window — switching to modules would break those. Keep this
-// block in sync if numbering.js ever changes.
-const PLATFORM_ABBR = { Telegram: 'TG', YouTube: 'YT', TikTok: 'TK', Pinterest: 'PI' };
-const ALL_PLATFORMS = Object.keys(PLATFORM_ABBR);
-const FORMAT_ABBR_LOOKUP = { 'short video': 'SV', 'long video': 'LV', 'post card': 'PC' };
-
 // Per-format colour AND correct text contrast — SV's violet needs white
 // text, LV's pastel orange and PC's turquoise need dark text to stay
-// readable. Matches numbering.js's FORMAT_META exactly, not a blanket
-// white as originally assumed.
+// readable. Mirrors numbering.js's FORMAT_META, used here only for the
+// mini calendar chip — app.js is a plain script and can't import the
+// real numbering.js directly. The popup itself now uses the real file.
 const FORMAT_META = {
     SV: { colour: '#5e17eb', font: '#ffffff' },
     LV: { colour: '#ffbc66', font: '#1a1a1a' },
     PC: { colour: '#03e493', font: '#1a1a1a' }
 };
-
-const PERSONA_ABBR = { Falcon: 'FL', Panther: 'PT', Wolf: 'WF', Lion: 'LN', All: 'AL' };
-
-function lookupPersonaAbbr(persona) {
-    const key = Object.keys(PERSONA_ABBR).find(k => k.toLowerCase() === String(persona || '').toLowerCase());
-    return key ? PERSONA_ABBR[key] : persona;
-}
-
-// Year/month only — mirrors numbering.js's parseDateParts() exactly,
-// including its today-fallback. Built for card-header display, NOT for
-// placing an event on the calendar — see parseRecordCalendarDate() further
-// down for that, which is a genuinely different job numbering.js doesn't do.
-function parseRecordYearMonth(dateStr) {
-    const match = /(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || '');
-    if (match) return { year: match[1], month: match[2] };
-    const now = new Date();
-    return { year: String(now.getFullYear()), month: String(now.getMonth() + 1).padStart(2, '0') };
-}
-
-// Mirrors numbering.js's formatCardHeaderForPlatform() exactly — the
-// header shown at the top of Card 1 itself, e.g. "YT-SV-FL-06.26-0055".
-function formatCardHeaderForPlatform(record, platform) {
-    const abbr = PLATFORM_ABBR[platform] || platform;
-    const f    = FORMAT_ABBR_LOOKUP[record.format] || record.format;
-    const pr   = lookupPersonaAbbr(record.persona);
-    const { year, month } = parseRecordYearMonth(record.date);
-    const yy   = year.slice(-2);
-    const seq  = record.sequences?.[platform];
-    const seqStr = seq != null ? String(seq).padStart(3, '0') : '---';
-    return `${abbr}-${f}-${pr}-${month}.${yy}-${seqStr}`;
-}
 
 const RECORD_CENTRE_API = 'https://recordmanagement.threadcommand.center';
 
@@ -88,15 +49,11 @@ async function initApp() {
         console.warn('⚠️ Supabase not configured, using localStorage fallback');
     }
 
-    // ── Session guard — runs after client is ready ─────────────────────────
-    if (supabaseAPI.client) {
-        const { data: { session } } = await supabaseAPI.client.auth.getSession();
-        if (!session) {
-            console.warn('⚠️ No session — redirecting to login');
-            window.location.href = 'login.html';
-            return;
-        }
-    }
+    // ── Session guard — now via Record Centre's GitHub OAuth, not Supabase
+    // Auth. requireRecordCentreSession() redirects to login.html itself if
+    // there's no valid token — same pattern Record Centre's own auth.js uses.
+    const rcUser = await requireRecordCentreSession();
+    if (!rcUser) return;
     
     injectCalendarStyles();
     initCalendar();
@@ -490,7 +447,7 @@ async function fetchRecordCentreRecords(startStr, endStr) {
         const endDate   = endStr.split('T')[0];
         return records.filter(r => {
             const day = parseRecordCalendarDate(r.date);
-            return day && day >= startDate && day <= endDate;
+            return r.scheduled && day && day >= startDate && day <= endDate;
         });
     } catch (err) {
         console.warn('⚠️ Record Centre fetch error:', err);
@@ -602,116 +559,6 @@ function formatDayDate(isoDateStr) {
     const d = new Date(isoDateStr + 'T00:00:00');
     if (isNaN(d)) return isoDateStr || '';
     return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
-async function openRecordCentreCardView(recordId) {
-    const token = typeof getRecordCentreToken === 'function' ? getRecordCentreToken() : null;
-    if (!token) {
-        alert('Not connected to Record Centre yet — auth.js needs to be in place first.');
-        return;
-    }
-    try {
-        const res = await fetch(`${RECORD_CENTRE_API}/api/records/${encodeURIComponent(recordId)}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Record not found or not authorised');
-        const record = await res.json();
-        showRecordCentrePopup(record);
-    } catch (err) {
-        alert('Could not load this record: ' + err.message);
-    }
-}
-
-// Mirrors card-1.js's actual field order (Category, Title, Persona,
-// Date/Time, Format, Platform, Playlist, Index) — file confirmed
-// 2026-06-28. Read-only here, unlike Record Centre's editable version,
-// since the Planner only views records, never edits them. Styled with
-// the established dark-purple palette rather than Record Centre's own
-// .record-card__* CSS classes, since that stylesheet hasn't been shared —
-// the field content and order is now the real thing, the paint job isn't.
-function showRecordCentrePopup(record) {
-    document.getElementById('rc-popup-overlay')?.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'rc-popup-overlay';
-    overlay.style.cssText = `
-        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 9999;
-    `;
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
-    });
-
-    const viewingPlatform = (record.platforms || [])[0] || ALL_PLATFORMS[0];
-    const headerId         = formatCardHeaderForPlatform(record, viewingPlatform);
-    const { year }         = parseRecordYearMonth(record.date);
-    const meta             = FORMAT_META[record.format] || { colour: '#9b59b6', font: '#ffffff' };
-
-    // Platform-letter row — all four always shown, active ones highlighted.
-    // Mirrors card-1.js's renderPlatformRow() convention (active = orange,
-    // inactive = grey), not each platform's own brand colour — that
-    // distinction belongs to the mini calendar chip, not this card.
-    const platformLettersHtml = ALL_PLATFORMS.map(p => {
-        const isActive = (record.platforms || []).includes(p);
-        return `<span style="
-            display: inline-block;
-            padding: 3px 8px;
-            margin-right: 4px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            background: ${isActive ? '#f39c12' : 'rgba(255,255,255,0.12)'};
-            color: ${isActive ? '#1a1a1a' : 'rgba(255,255,255,0.4)'};
-        ">${PLATFORM_ABBR[p]}</span>`;
-    }).join('');
-
-    const field = (label, value) => `
-        <div style="margin-bottom: 10px;">
-            <div style="font-size: 10px; color: rgba(232,213,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">${label}</div>
-            <div style="font-size: 13px; color: #fff; overflow-wrap: break-word;">${value || '—'}</div>
-        </div>`;
-
-    overlay.innerHTML = `
-        <div style="
-            background: rgba(45, 27, 78, 0.95);
-            border-radius: 16px;
-            padding: 24px;
-            width: 90%; max-width: 420px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            color: #fff;
-            font-family: Montserrat, sans-serif;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
-                <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: rgba(232,213,255,0.9);">${headerId}</div>
-                <div style="font-size: 11px; color: rgba(232,213,255,0.4);">${year}</div>
-            </div>
-            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:12px; padding:6px 10px; border-radius:6px; display:inline-block; margin-bottom:16px;">
-                ${record.category || 'Untitled'}
-            </div>
-            ${field('Title', record.title)}
-            ${field('Persona', record.persona)}
-            ${field('Date / Time', `${record.date || '—'}${record.time ? ' · ' + record.time : ''}`)}
-            ${field('Format', record.format)}
-            <div style="margin-bottom: 10px;">
-                <div style="font-size: 10px; color: rgba(232,213,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Platform</div>
-                <div>${platformLettersHtml}</div>
-            </div>
-            ${field('Playlist', record.playlist)}
-            ${field('Index', record.index)}
-            ${field('Notes', record.content?.notes)}
-            <button id="rc-popup-close" style="
-                background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-                border: none; border-radius: 8px; color: #fff;
-                padding: 10px 16px; font-size: 14px; font-weight: 600;
-                cursor: pointer; width: 100%; margin-top: 4px;
-            ">Close</button>
-        </div>`;
-
-    document.body.appendChild(overlay);
-    document.getElementById('rc-popup-close').addEventListener('click', () => overlay.remove());
 }
 
 // Console-testable today, no Record Centre session needed:
