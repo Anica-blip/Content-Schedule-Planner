@@ -68,9 +68,20 @@ function showRecordPopup(record) {
         card.innerHTML = renderCard3(record);
         bindCard3Events(card, record, {
             onBack: () => showStep2(),
-            onSave: () => alert('Saving is managed in Record Centre — this view is read-only.'),
+            onSave: () => {}, // never actually reached — button is disabled below
             rerender: () => showStep3()
         });
+
+        // Save belongs to Record Centre, not the Planner — this view is
+        // read-only. A disabled button never fires a click event at all,
+        // so this is genuinely static, not just intercepted.
+        const saveBtn = card.querySelector('[data-action="save"]');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.title = 'Saving happens in Record Centre — this view is read-only';
+            saveBtn.style.opacity = '0.35';
+            saveBtn.style.cursor = 'not-allowed';
+        }
     }
 
     showStep1();
