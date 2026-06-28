@@ -39,6 +39,15 @@ const FORMAT_META = {
     PC: { colour: '#03e493', font: '#1a1a1a' }
 };
 
+// Real records likely store the full word ("short video"), not the code —
+// numbering.js's own formatCardHeaderForPlatform() converts before lookup
+// for exactly this reason. Without this, every record fell through to the
+// fallback colour below, which is why they all looked identical.
+const FORMAT_ABBR_LOOKUP = { 'short video': 'SV', 'long video': 'LV', 'post card': 'PC' };
+function resolveFormatCode(format) {
+    return FORMAT_ABBR_LOOKUP[format] || format;
+}
+
 const RECORD_CENTRE_API = 'https://recordmanagement.threadcommand.center';
 
 async function initApp() {
@@ -170,6 +179,9 @@ function initCalendar() {
             if (arg.event.extendedProps.isRecordCentreGroup) {
                 return { html: renderRecordCentreGroup(arg.event.extendedProps.records) };
             }
+            if (arg.event.extendedProps.isRecordCentreSingle) {
+                return { html: renderRecordCentreCard(arg.event.extendedProps.record) };
+            }
 
             const post     = arg.event.extendedProps;
             const platform = PLATFORMS[post.platform] || { abbr: 'XX', color: '#9b59b6' };
@@ -268,9 +280,9 @@ function initCalendar() {
         //       which is always painted before eventDidMount fires — gives a
         //       reliable non-zero offsetWidth unlike harness.parentElement.
         eventDidMount: function(info) {
-            // ── Record Centre cards — wire up eye-icon clicks, then stop.
-            // The timeGrid side-by-side positioning hack below is for the
-            // manual-post path only and never runs for these. ───────────────
+            // ── Record Centre — month view grouped chips: wire eye clicks
+            // only. Sizing is handled by CSS now (.rc-group-event), not by
+            // this positioning logic, since month view has no time columns. ──
             if (info.event.extendedProps.isRecordCentreGroup) {
                 info.el.querySelectorAll('.rc-eye-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -280,6 +292,22 @@ function initCalendar() {
                     });
                 });
                 return;
+            }
+
+            // ── Record Centre — week/day view, one event per record, slotted
+            // at its real time. Wire the eye click, then deliberately fall
+            // through to the same side-by-side positioning logic below that
+            // manual posts use — colIndex/colTotal works identically either
+            // way, so this reuses it rather than duplicating it. ──────────────
+            if (info.event.extendedProps.isRecordCentreSingle) {
+                info.el.querySelectorAll('.rc-eye-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const card = btn.closest('.rc-card');
+                        if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
+                    });
+                });
+                // no return — falls through on purpose
             }
 
             const view = info.view.type;
@@ -461,29 +489,80 @@ async function fetchRecordCentreRecords(startStr, endStr) {
 }
 
 function addRecordCentreCardsToCalendar(records) {
-    // Group by day — one FullCalendar event per day, holding every Record
-    // Centre card for that day. The 2-up wrap grid lives entirely inside
-    // that single event's own HTML, so FullCalendar never has to stack
-    // multiple harnesses on the same day — that stacking is exactly what
-    // broke before. This sidesteps it rather than re-solving it.
-    const byDay = {};
+    const view = calendar.view.type;
+
+    if (view !== 'timeGridWeek' && view !== 'timeGridDay') {
+        // Month view — group by day, one FullCalendar event per day, holding
+        // every Record Centre card for that day. The 2-up wrap grid lives
+        // entirely inside that single event's own HTML, so FullCalendar
+        // never has to stack multiple harnesses on the same day.
+        const byDay = {};
+        records.forEach(r => {
+            const day = parseRecordCalendarDate(r.date);
+            if (!day) return;
+            (byDay[day] = byDay[day] || []).push(r);
+        });
+
+        console.log('✅ Adding', Object.keys(byDay).length, 'day-group(s) to month view:', Object.keys(byDay));
+
+        Object.entries(byDay).forEach(([day, dayRecords]) => {
+            dayRecords.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            calendar.addEvent({
+                id: `rc-group-${day}`,
+                start: day,
+                allDay: true,
+                classNames: ['rc-group-event'],
+                extendedProps: { isRecordCentreGroup: true, records: dayRecords }
+            });
+        });
+        return;
+    }
+
+    // Week/Day view — one event per record, placed at its actual time so it
+    // lands in the correct hour row rather than the all-day banner. Same
+    // 1-minute same-timestamp offset trick loadPosts() already uses, so two
+    // records at an identical time still land in the same column instead of
+    // FullCalendar pushing one into the next day.
+    const slotGroups = {};
     records.forEach(r => {
         const day = parseRecordCalendarDate(r.date);
         if (!day) return;
-        (byDay[day] = byDay[day] || []).push(r);
+        const slotKey = `${day}_${r.time || 'allday'}`;
+        (slotGroups[slotKey] = slotGroups[slotKey] || []).push(r);
     });
 
-    console.log('✅ Adding', Object.keys(byDay).length, 'day-group(s) to the calendar:', Object.keys(byDay));
-
-    Object.entries(byDay).forEach(([day, dayRecords]) => {
-        dayRecords.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-        calendar.addEvent({
-            id: `rc-group-${day}`,
-            start: day,
-            allDay: true,
-            extendedProps: { isRecordCentreGroup: true, records: dayRecords }
+    let placed = 0;
+    Object.values(slotGroups).forEach(group => {
+        group.forEach((r, idx) => {
+            const day = parseRecordCalendarDate(r.date);
+            let start = day;
+            if (r.time) {
+                if (idx === 0) {
+                    start = `${day}T${r.time}`;
+                } else {
+                    const [hh, mm] = r.time.split(':').map(Number);
+                    const totalMins = (hh || 0) * 60 + (mm || 0) + idx;
+                    const oh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+                    const om = String(totalMins % 60).padStart(2, '0');
+                    start = `${day}T${oh}:${om}:00`;
+                }
+            }
+            calendar.addEvent({
+                id: `rc-single-${r.id}`,
+                start,
+                allDay: !r.time,
+                classNames: ['rc-single-event'],
+                extendedProps: {
+                    isRecordCentreSingle: true,
+                    record: r,
+                    colIndex: idx,
+                    colTotal: group.length
+                }
+            });
+            placed++;
         });
     });
+    console.log('✅ Placed', placed, 'Record Centre event(s) in', view);
 }
 
 function renderRecordCentreGroup(records) {
@@ -493,8 +572,7 @@ function renderRecordCentreGroup(records) {
 }
 
 function renderRecordCentreCard(r) {
-    const meta    = FORMAT_META[r.format] || { colour: '#9b59b6', font: '#ffffff' };
-    const dayDate = formatDayDate(r.date);
+    const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
 
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
@@ -502,28 +580,28 @@ function renderRecordCentreCard(r) {
             background: ${info.color};
             color: #fff;
             font-weight: 700;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 3px;
+            font-size: 8px;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-right: 2px;
             white-space: nowrap;
         ">${info.abbr}</span>`;
     }).join('');
 
-    // Real eye/view icon — same SVG as icons.js's icon('view'), so the
-    // mini chip matches the rest of the cloned card system instead of
-    // using an emoji that doesn't.
-    const eyeIcon = `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    // Real eye/view icon — same SVG as icons.js's icon('view').
+    const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
+    // Date dropped deliberately — the day cell's own number already shows
+    // it, repeating it just ate space a square doesn't have to spare.
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
             flex: 0 0 calc(50% - 2px);
+            aspect-ratio: 1 / 1;
             box-sizing: border-box;
-            background: rgba(45, 27, 78, 0.72);
-            border: 1px solid rgba(155, 89, 182, 0.25);
+            background: rgba(45, 27, 78, 0.85);
+            border: 1px solid rgba(155, 89, 182, 0.3);
             border-radius: 6px;
             overflow: hidden;
-            min-height: 58px;
             display: flex;
             flex-direction: column;
         ">
@@ -531,16 +609,17 @@ function renderRecordCentreCard(r) {
                 background: ${meta.colour};
                 color: ${meta.font};
                 font-weight: 700;
-                font-size: 11px;
-                padding: 4px 6px;
+                font-size: 9px;
+                padding: 2px 4px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                flex-shrink: 0;
             ">${r.category || 'Untitled'}</div>
-            <div style="padding: 4px 6px; color: rgba(232,213,255,0.85); line-height: 1.4; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px;">${dayDate}${r.time ? ' · ' + r.time : ''}</div>
-                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:3px; margin-top:3px;">
-                    <div style="display:flex; flex-wrap:wrap;">${platformBadges}</div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                ${r.time ? `<div style="font-size:9px; color:rgba(232,213,255,0.9); font-weight:600;">${r.time}</div>` : ''}
+                <div style="display:flex; align-items:center; gap:3px;">
+                    ${platformBadges}
                     <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
                 </div>
             </div>
@@ -567,12 +646,6 @@ function parseRecordCalendarDate(dateStr) {
         }
     }
     return new Date().toISOString().split('T')[0];
-}
-
-function formatDayDate(isoDateStr) {
-    const d = new Date(isoDateStr + 'T00:00:00');
-    if (isNaN(d)) return isoDateStr || '';
-    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 // Console-testable today, no Record Centre session needed:
