@@ -617,12 +617,10 @@ function renderRecordCentreCard(r) {
                 text-overflow: ellipsis;
                 flex-shrink: 0;
             ">${r.category || 'Untitled'}</div>
-            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
-                ${r.time ? `<div style="font-size:9px; color:rgba(232,213,255,0.9); font-weight:600;">${r.time}</div>` : ''}
-                <div style="display:flex; align-items:center; gap:3px;">
-                    ${platformBadges}
-                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
-                </div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:4px; padding:2px;">
+                ${r.time ? `<span style="font-size:8px; color:rgba(232,213,255,0.9); font-weight:600;">${r.time}</span>` : ''}
+                ${platformBadges}
+                <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
             </div>
         </div>`;
 }
