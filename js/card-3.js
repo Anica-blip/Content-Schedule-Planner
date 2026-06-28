@@ -9,7 +9,7 @@
 // and the header number updates to match whichever tab is selected.
 
 import { icon } from './icons.js?v=13';
-import { formatCardHeaderForPlatform } from './numbering.js?v=13';
+import { formatCardHeaderForPlatform } from './numbering.js?v=14';
 import { API_BASE } from './api.js?v=13';
 
 // Approximate public character guidance per platform — a helpful
