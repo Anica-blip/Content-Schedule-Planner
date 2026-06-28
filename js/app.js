@@ -502,13 +502,18 @@ function renderRecordCentreCard(r) {
             background: ${info.color};
             color: #fff;
             font-weight: 700;
-            font-size: 7px;
-            padding: 1px 4px;
+            font-size: 10px;
+            padding: 2px 6px;
             border-radius: 3px;
-            margin-right: 2px;
+            margin-right: 3px;
             white-space: nowrap;
         ">${info.abbr}</span>`;
     }).join('');
+
+    // Real eye/view icon — same SVG as icons.js's icon('view'), so the
+    // mini chip matches the rest of the cloned card system instead of
+    // using an emoji that doesn't.
+    const eyeIcon = `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
@@ -516,25 +521,30 @@ function renderRecordCentreCard(r) {
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.72);
             border: 1px solid rgba(155, 89, 182, 0.25);
-            border-radius: 5px;
+            border-radius: 6px;
             overflow: hidden;
+            min-height: 74px;
+            display: flex;
+            flex-direction: column;
         ">
             <div style="
                 background: ${meta.colour};
                 color: ${meta.font};
                 font-weight: 700;
-                font-size: 8px;
-                padding: 2px 4px;
+                font-size: 11px;
+                padding: 4px 6px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             ">${r.category || 'Untitled'}</div>
-            <div style="padding: 2px 4px; color: rgba(232,213,255,0.85); line-height: 1.3;">
-                <div style="font-size: 7px;">${dayDate}</div>
-                ${r.time ? `<div style="font-size: 7px;">${r.time}</div>` : ''}
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1px; flex-wrap:wrap; gap:2px;">
+            <div style="padding: 4px 6px; color: rgba(232,213,255,0.85); line-height: 1.4; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 10px;">${dayDate}</div>
+                    ${r.time ? `<div style="font-size: 10px;">${r.time}</div>` : ''}
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:3px; margin-top:3px;">
                     <div style="display:flex; flex-wrap:wrap;">${platformBadges}</div>
-                    <span class="rc-eye-btn" style="cursor:pointer; font-size:9px;" title="View content">👁️</span>
+                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
                 </div>
             </div>
         </div>`;
