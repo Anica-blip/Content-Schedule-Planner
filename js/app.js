@@ -28,13 +28,55 @@ const PLATFORMS = {
     forum:     { name: 'Forum',     abbr: 'FM', icon: '💭', color: '#ff6b35' }
 };
 
-// Record Centre format colours — must match Record Centre exactly, confirmed
-// in both repos' SETUP.md.
-const FORMAT_COLOURS = {
-    SV: '#5e17eb',
-    LV: '#ffbc66',
-    PC: '#03e493'
+// ── Mirrors Record Centre's numbering.js exactly (file confirmed 2026-06-28).
+// Copied rather than imported: app.js is a plain script, not an ES module,
+// and the inline onsubmit="..." handlers in index.html need these functions
+// to stay on window — switching to modules would break those. Keep this
+// block in sync if numbering.js ever changes.
+const PLATFORM_ABBR = { Telegram: 'TG', YouTube: 'YT', TikTok: 'TK', Pinterest: 'PI' };
+const ALL_PLATFORMS = Object.keys(PLATFORM_ABBR);
+const FORMAT_ABBR_LOOKUP = { 'short video': 'SV', 'long video': 'LV', 'post card': 'PC' };
+
+// Per-format colour AND correct text contrast — SV's violet needs white
+// text, LV's pastel orange and PC's turquoise need dark text to stay
+// readable. Matches numbering.js's FORMAT_META exactly, not a blanket
+// white as originally assumed.
+const FORMAT_META = {
+    SV: { colour: '#5e17eb', font: '#ffffff' },
+    LV: { colour: '#ffbc66', font: '#1a1a1a' },
+    PC: { colour: '#03e493', font: '#1a1a1a' }
 };
+
+const PERSONA_ABBR = { Falcon: 'FL', Panther: 'PT', Wolf: 'WF', Lion: 'LN', All: 'AL' };
+
+function lookupPersonaAbbr(persona) {
+    const key = Object.keys(PERSONA_ABBR).find(k => k.toLowerCase() === String(persona || '').toLowerCase());
+    return key ? PERSONA_ABBR[key] : persona;
+}
+
+// Year/month only — mirrors numbering.js's parseDateParts() exactly,
+// including its today-fallback. Built for card-header display, NOT for
+// placing an event on the calendar — see parseRecordCalendarDate() further
+// down for that, which is a genuinely different job numbering.js doesn't do.
+function parseRecordYearMonth(dateStr) {
+    const match = /(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || '');
+    if (match) return { year: match[1], month: match[2] };
+    const now = new Date();
+    return { year: String(now.getFullYear()), month: String(now.getMonth() + 1).padStart(2, '0') };
+}
+
+// Mirrors numbering.js's formatCardHeaderForPlatform() exactly — the
+// header shown at the top of Card 1 itself, e.g. "YT-SV-FL-06.26-0055".
+function formatCardHeaderForPlatform(record, platform) {
+    const abbr = PLATFORM_ABBR[platform] || platform;
+    const f    = FORMAT_ABBR_LOOKUP[record.format] || record.format;
+    const pr   = lookupPersonaAbbr(record.persona);
+    const { year, month } = parseRecordYearMonth(record.date);
+    const yy   = year.slice(-2);
+    const seq  = record.sequences?.[platform];
+    const seqStr = seq != null ? String(seq).padStart(3, '0') : '---';
+    return `${abbr}-${f}-${pr}-${month}.${yy}-${seqStr}`;
+}
 
 const RECORD_CENTRE_API = 'https://recordmanagement.threadcommand.center';
 
@@ -447,7 +489,7 @@ async function fetchRecordCentreRecords(startStr, endStr) {
         const startDate = startStr.split('T')[0];
         const endDate   = endStr.split('T')[0];
         return records.filter(r => {
-            const day = parseRecordDate(r.date);
+            const day = parseRecordCalendarDate(r.date);
             return day && day >= startDate && day <= endDate;
         });
     } catch (err) {
@@ -464,7 +506,7 @@ function addRecordCentreCardsToCalendar(records) {
     // broke before. This sidesteps it rather than re-solving it.
     const byDay = {};
     records.forEach(r => {
-        const day = parseRecordDate(r.date);
+        const day = parseRecordCalendarDate(r.date);
         if (!day) return;
         (byDay[day] = byDay[day] || []).push(r);
     });
@@ -487,10 +529,22 @@ function renderRecordCentreGroup(records) {
 }
 
 function renderRecordCentreCard(r) {
-    const formatColour = FORMAT_COLOURS[r.format] || '#9b59b6';
-    const platformName = (r.platforms || [])[0] || '';
-    const platformInfo = PLATFORMS[platformName.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-    const dayDate       = formatDayDate(r.date);
+    const meta    = FORMAT_META[r.format] || { colour: '#9b59b6', font: '#ffffff' };
+    const dayDate = formatDayDate(r.date);
+
+    const platformBadges = (r.platforms || []).map(p => {
+        const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
+        return `<span style="
+            background: ${info.color};
+            color: #fff;
+            font-weight: 700;
+            font-size: 7px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-right: 2px;
+            white-space: nowrap;
+        ">${info.abbr}</span>`;
+    }).join('');
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
@@ -502,8 +556,8 @@ function renderRecordCentreCard(r) {
             overflow: hidden;
         ">
             <div style="
-                background: ${formatColour};
-                color: #fff;
+                background: ${meta.colour};
+                color: ${meta.font};
                 font-weight: 700;
                 font-size: 8px;
                 padding: 2px 4px;
@@ -514,29 +568,34 @@ function renderRecordCentreCard(r) {
             <div style="padding: 2px 4px; color: rgba(232,213,255,0.85); line-height: 1.3;">
                 <div style="font-size: 7px;">${dayDate}</div>
                 ${r.time ? `<div style="font-size: 7px;">${r.time}</div>` : ''}
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1px;">
-                    <span style="
-                        background: ${platformInfo.color};
-                        color: #fff;
-                        font-weight: 700;
-                        font-size: 7px;
-                        padding: 1px 4px;
-                        border-radius: 3px;
-                    ">${platformInfo.abbr}</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1px; flex-wrap:wrap; gap:2px;">
+                    <div style="display:flex; flex-wrap:wrap;">${platformBadges}</div>
                     <span class="rc-eye-btn" style="cursor:pointer; font-size:9px;" title="View content">👁️</span>
                 </div>
             </div>
         </div>`;
 }
 
-// TEMP — handles ISO dates (YYYY-MM-DD) only, enough for the test data
-// below. Record Centre's real dates are free-typed text (e.g. "Thu
-// 25.06"), already fixed there by numbering.js's parseDateParts(). Send
-// me that function and this gets swapped for the real thing — not
-// rewritten blind, that's the exact bug that already cost time once.
-function parseRecordDate(dateStr) {
-    const match = dateStr?.match(/^\d{4}-\d{2}-\d{2}/);
-    return match ? match[0] : null;
+// Full calendar-day parser. numbering.js's parseDateParts() only returns
+// {year, month} — enough for a card header, not enough to place an event
+// on the right day. Confirmed common format (2026-06-28): day-name + DD.MM,
+// e.g. "Wed 03.06" — no year typed at all, so the current year is assumed.
+// Still checks for a full ISO date first, in case that's what's stored.
+// Falls back to today only if neither pattern is found anywhere.
+function parseRecordCalendarDate(dateStr) {
+    if (typeof dateStr === 'string') {
+        const iso = dateStr.match(/\d{4}-\d{2}-\d{2}/);
+        if (iso) return iso[0];
+
+        const ddmm = dateStr.match(/(\d{1,2})\.(\d{1,2})/);
+        if (ddmm) {
+            const day   = ddmm[1].padStart(2, '0');
+            const month = ddmm[2].padStart(2, '0');
+            const year  = new Date().getFullYear();
+            return `${year}-${month}-${day}`;
+        }
+    }
+    return new Date().toISOString().split('T')[0];
 }
 
 function formatDayDate(isoDateStr) {
@@ -557,28 +616,118 @@ async function openRecordCentreCardView(recordId) {
         });
         if (!res.ok) throw new Error('Record not found or not authorised');
         const record = await res.json();
-        // Placeholder popup — swap for Record Centre's actual Card 1 markup
-        // once shared, so it matches exactly rather than being a second,
-        // slightly-different version of the same view.
-        alert(`${record.category || 'Untitled'}\n${record.title || ''}`);
+        showRecordCentrePopup(record);
     } catch (err) {
         alert('Could not load this record: ' + err.message);
     }
 }
 
+// Mirrors card-1.js's actual field order (Category, Title, Persona,
+// Date/Time, Format, Platform, Playlist, Index) — file confirmed
+// 2026-06-28. Read-only here, unlike Record Centre's editable version,
+// since the Planner only views records, never edits them. Styled with
+// the established dark-purple palette rather than Record Centre's own
+// .record-card__* CSS classes, since that stylesheet hasn't been shared —
+// the field content and order is now the real thing, the paint job isn't.
+function showRecordCentrePopup(record) {
+    document.getElementById('rc-popup-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'rc-popup-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999;
+    `;
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    const viewingPlatform = (record.platforms || [])[0] || ALL_PLATFORMS[0];
+    const headerId         = formatCardHeaderForPlatform(record, viewingPlatform);
+    const { year }         = parseRecordYearMonth(record.date);
+    const meta             = FORMAT_META[record.format] || { colour: '#9b59b6', font: '#ffffff' };
+
+    // Platform-letter row — all four always shown, active ones highlighted.
+    // Mirrors card-1.js's renderPlatformRow() convention (active = orange,
+    // inactive = grey), not each platform's own brand colour — that
+    // distinction belongs to the mini calendar chip, not this card.
+    const platformLettersHtml = ALL_PLATFORMS.map(p => {
+        const isActive = (record.platforms || []).includes(p);
+        return `<span style="
+            display: inline-block;
+            padding: 3px 8px;
+            margin-right: 4px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            background: ${isActive ? '#f39c12' : 'rgba(255,255,255,0.12)'};
+            color: ${isActive ? '#1a1a1a' : 'rgba(255,255,255,0.4)'};
+        ">${PLATFORM_ABBR[p]}</span>`;
+    }).join('');
+
+    const field = (label, value) => `
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 10px; color: rgba(232,213,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">${label}</div>
+            <div style="font-size: 13px; color: #fff; overflow-wrap: break-word;">${value || '—'}</div>
+        </div>`;
+
+    overlay.innerHTML = `
+        <div style="
+            background: rgba(45, 27, 78, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%; max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            color: #fff;
+            font-family: Montserrat, sans-serif;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: rgba(232,213,255,0.9);">${headerId}</div>
+                <div style="font-size: 11px; color: rgba(232,213,255,0.4);">${year}</div>
+            </div>
+            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:12px; padding:6px 10px; border-radius:6px; display:inline-block; margin-bottom:16px;">
+                ${record.category || 'Untitled'}
+            </div>
+            ${field('Title', record.title)}
+            ${field('Persona', record.persona)}
+            ${field('Date / Time', `${record.date || '—'}${record.time ? ' · ' + record.time : ''}`)}
+            ${field('Format', record.format)}
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 10px; color: rgba(232,213,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Platform</div>
+                <div>${platformLettersHtml}</div>
+            </div>
+            ${field('Playlist', record.playlist)}
+            ${field('Index', record.index)}
+            ${field('Notes', record.content?.notes)}
+            <button id="rc-popup-close" style="
+                background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+                border: none; border-radius: 8px; color: #fff;
+                padding: 10px 16px; font-size: 14px; font-weight: 600;
+                cursor: pointer; width: 100%; margin-top: 4px;
+            ">Close</button>
+        </div>`;
+
+    document.body.appendChild(overlay);
+    document.getElementById('rc-popup-close').addEventListener('click', () => overlay.remove());
+}
+
 // Console-testable today, no Record Centre session needed:
 // open devtools (F12) → console → type testRecordCentreCards() → enter.
-// Mirrors your screenshot: two cards sharing a 17:00 on one day, one card
-// the next day — exactly the case that needs to wrap 2-up, not stack.
-// Delete this whole function once live data is flowing.
+// Uses the real confirmed date format ("Wed DD.MM", no year) rather than
+// ISO, so this also proves the date parser handles real records, not just
+// the easy case. Falls within the current month already — no need to
+// navigate. Delete this whole function once live data is flowing.
 window.testRecordCentreCards = function() {
     addRecordCentreCardsToCalendar([
-        { id: 'test-1', category: 'Campaign Launch',   format: 'SV', date: '2026-06-21', time: '17:00', platforms: ['Telegram']  },
-        { id: 'test-2', category: 'Behind the Scenes', format: 'LV', date: '2026-06-21', time: '17:00', platforms: ['TikTok']    },
-        { id: 'test-3', category: 'Weekly Recap',       format: 'PC', date: '2026-06-21', time: '19:00', platforms: ['Pinterest'] },
-        { id: 'test-4', category: 'Q&A Session',        format: 'SV', date: '2026-06-22', time: '12:00', platforms: ['Youtube']   }
+        { id: 'test-1', category: 'Philosophy',  format: 'SV', date: 'Wed 24.06', time: '17:00', platforms: ['Telegram']  },
+        { id: 'test-2', category: 'Mindset',     format: 'LV', date: 'Wed 24.06', time: '17:00', platforms: ['TikTok']    },
+        { id: 'test-3', category: 'WeeklyRecap', format: 'PC', date: 'Wed 24.06', time: '19:00', platforms: ['Pinterest'] },
+        { id: 'test-4', category: 'QandA',       format: 'SV', date: 'Thu 25.06', time: '12:00', platforms: ['YouTube']   }
     ]);
-    console.log('✅ Test Record Centre cards added — make sure the calendar is showing June 2026.');
+    console.log('✅ Test Record Centre cards added.');
 };
 
 function openCreatePostModal(date = null) {
