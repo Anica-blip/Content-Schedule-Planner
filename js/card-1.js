@@ -16,7 +16,7 @@
 import { icon } from './icons.js?v=13';
 import {
   ALL_PLATFORMS, PLATFORM_ABBR, formatCardHeaderForPlatform, parseDateParts,
-} from './numbering.js?v=13';
+} from './numbering.js?v=14';
 
 const FIELD_ORDER = [
   { key: 'category', label: 'Category' },
