@@ -13,6 +13,14 @@ let selectedImageFile = null;
 // wipes events loaded by a prior fire. 150ms settles all view-switch bursts.
 let _datesSetTimer = null;
 
+// Tracks whether we've already snapped to today on entering day view —
+// without this, calendar.today() was firing on every remount, which
+// likely includes navigating via prev/next WHILE staying in day view,
+// snapping straight back to today before any other date could ever
+// actually be seen. Only the first entry into day view should jump;
+// navigating within it afterwards must be left alone.
+let _enteredDayView = false;
+
 // Platform configuration with abbreviations and colors (matching dashboard)
 const PLATFORMS = {
     instagram: { name: 'Instagram', abbr: 'IS', icon: '📸', color: '#e4405f' },
@@ -162,7 +170,12 @@ function initCalendar() {
 
         viewDidMount: function(info) {
             if (info.view.type === 'timeGridDay') {
-                calendar.today();
+                if (!_enteredDayView) {
+                    _enteredDayView = true;
+                    calendar.today();
+                }
+            } else {
+                _enteredDayView = false;
             }
         },
         select: function(info) {
@@ -591,7 +604,7 @@ function renderMonthCard(r) {
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            width: 100%;
+            flex: 0 0 calc(50% - 2px);
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
             border: 1px solid rgba(155, 89, 182, 0.3);
@@ -624,10 +637,10 @@ function renderTimedSquareCard(r, sizeClass) {
     const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
+        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:9px; padding:2px 4px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
     }).join('');
 
-    const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const eyeIcon = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
     const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
 
     return `
@@ -642,10 +655,10 @@ function renderTimedSquareCard(r, sizeClass) {
             display: flex;
             flex-direction: column;
         ">
-            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:8px; padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">${r.category || 'Untitled'}</div>
+            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:9px; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">${r.category || 'Untitled'}</div>
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px;">
-                <div style="font-size:7px; color:rgba(232,213,255,0.9); line-height:1.2;">${dayLabel}</div>
-                <div style="font-size:7px; color:rgba(232,213,255,0.9); font-weight:600; line-height:1.2;">${r.time || ''}</div>
+                <div style="font-size:9px; font-weight:700; color:rgba(232,213,255,0.95); line-height:1.25;">${dayLabel}</div>
+                <div style="font-size:9px; font-weight:700; color:rgba(232,213,255,0.95); line-height:1.25;">${r.time || ''}</div>
                 <div style="display:flex; align-items:center; gap:2px; margin-top:1px;">
                     ${platformBadges}
                     <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
