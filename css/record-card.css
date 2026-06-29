@@ -303,12 +303,18 @@
  * actual fix here: without it, a narrow day-column had nothing stopping
  * the card from shrinking past readable, which is what was truncating
  * "Persona" down to a sliver with no room left for the eye icon at all. */
+/* Reverted to the exact mechanism Chef already approved for the original
+ * month square card — flex-grow with a 50% basis, not a fixed min-width.
+ * A lone card fills the row; two cards split evenly. No artificial floor
+ * needed, and nothing for the calendar's own sizing to fight against. */
 .rc-card--week {
-  flex: 0 0 calc(50% - 2px);
-  min-width: 100px;
+  flex: 1 1 calc(50% - 2.5px);
 }
 
-/* Day: bigger fixed width — more room than week, so it can afford it. */
+/* Day: fixed width at the same natural scale the approved card already
+ * had — not the inflated 130px this drifted to. Stays fixed (not grow)
+ * deliberately: day's job is "tile and wrap", a consistent repeating
+ * size, not a 50/50 split. */
 .rc-card--day {
-  flex: 0 0 130px;
+  flex: 0 0 96px;
 }
