@@ -106,10 +106,10 @@ function showRecordPopup(record) {
             return `<span class="platform-letter ${isActive ? 'active' : ''}">${RC_PLATFORM_ABBR[p]}</span>`;
         }).join('');
 
-        const field = (label, value) => `
+        const field = (label, value, wrap) => `
             <div class="record-card__field">
                 <div class="record-card__field-label">${label}</div>
-                <div class="record-card__field-value">${rcEsc(value || '—')}</div>
+                <div class="record-card__field-value${wrap ? ' record-card__field-value--wrap' : ''}">${rcEsc(value || '—')}</div>
             </div>`;
 
         return `
@@ -117,7 +117,7 @@ function showRecordPopup(record) {
             <div class="record-card__body">
                 <div class="record-card__year">${rcEsc(year)}</div>
                 ${field('Category', record.category)}
-                ${field('Title', record.title)}
+                ${field('Title', record.title, true)}
                 ${field('Persona', record.persona)}
                 <div class="record-card__field">
                     <div class="record-card__field-label">Date</div>
@@ -131,7 +131,7 @@ function showRecordPopup(record) {
                     <div class="platform-letter-row">${platformRow}</div>
                 </div>
                 ${field('Playlist', record.playlist)}
-                ${field('Index', record.index)}
+                ${field('Index', record.index, true)}
             </div>
             <div class="record-card__footer">
                 <button class="icon-btn" data-action="close" title="Close">${RC_ICONS.close}</button>
@@ -177,12 +177,12 @@ function showRecordPopup(record) {
 
         const fields = [
             ['Title', d.title], ['Description', d.description], ['Hashtags', d.hashtags],
-            ['Tags', d.tags], ['CTA', d.cta], ['Keywords', d.keywords],
+            ['Tags', d.tags], ['CTA', d.cta, true], ['Keywords', d.keywords, true],
             ['Platform Notes', d.platformNotes],
-        ].map(([label, value]) => `
+        ].map(([label, value, singleLine]) => `
             <div class="field-block">
                 <label>${label}</label>
-                <div class="value-box">${rcEsc(value || '—')}</div>
+                <div class="value-box${singleLine ? ' value-box--single-line' : ''}">${rcEsc(value || '—')}</div>
             </div>`).join('');
 
         return `
