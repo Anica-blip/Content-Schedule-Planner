@@ -132,6 +132,13 @@
   word-break: break-word;
   min-width: 0;
 }
+/* Card 1's Title/Index are real <textarea> fields in Record Centre, and
+   EVERY textarea there has a flat `min-height: 90px` floor (a global
+   rule, not tied to the rows attribute) — confirmed directly from the
+   real stylesheet, not estimated from rows × line-height. */
+.record-card__field-value--wrap {
+  min-height: 90px;
+}
 
 .record-card__footer {
   background: var(--rc-violet);
@@ -221,7 +228,14 @@
   border-radius: var(--rc-radius-sm);
   font-family: var(--rc-font);
   font-size: 0.92rem;
-  min-height: 1.4em;
+  /* Matches the real global `textarea { min-height: 90px }` rule —
+   * confirmed from the actual stylesheet. Every field here is a real
+   * <textarea> in Record Centre except CTA and Keywords, which override
+   * this below since those are plain single-line <input> fields there. */
+  min-height: 90px;
+}
+.record-card__body--writing .value-box--single-line {
+  min-height: 0;
 }
 .record-card__purpose-note {
   text-align: center;
