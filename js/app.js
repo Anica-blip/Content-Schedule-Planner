@@ -173,7 +173,7 @@ function initCalendar() {
             // the actual bug that caused "Failed to load post". Clicking
             // anywhere on the square now opens the card, not just the
             // small eye icon, since that's a more reliable target at this size.
-            if (info.event.extendedProps.isRecordCentreGroup || info.event.extendedProps.isRecordCentreSingle) {
+            if (info.event.extendedProps.isRecordCentreGroup) {
                 const card = info.jsEvent.target.closest('.rc-card');
                 if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
                 return;
@@ -190,11 +190,15 @@ function initCalendar() {
         eventContent: function(arg) {
             // ── Record Centre cards — separate render path. Manual-post
             // logic below this block is completely unchanged. ──────────────
+            // Unified: every Record Centre slot (one per day in month, one
+            // per day+time in week/day) is always a GROUP, even if it only
+            // holds one record — this is what removes the need to position
+            // multiple competing events at the same time slot at all.
             if (arg.event.extendedProps.isRecordCentreGroup) {
-                return { html: renderRecordCentreGroup(arg.event.extendedProps.records) };
-            }
-            if (arg.event.extendedProps.isRecordCentreSingle) {
-                return { html: renderRecordCentreTimedCard(arg.event.extendedProps.record) };
+                const { records, viewMode } = arg.event.extendedProps;
+                return { html: viewMode === 'month'
+                    ? renderMonthGroup(records)
+                    : renderTimedGroup(records, viewMode) };
             }
 
             const post     = arg.event.extendedProps;
@@ -294,9 +298,14 @@ function initCalendar() {
         //       which is always painted before eventDidMount fires — gives a
         //       reliable non-zero offsetWidth unlike harness.parentElement.
         eventDidMount: function(info) {
-            // ── Record Centre — month view grouped chips: wire eye clicks
-            // only. Sizing is handled by CSS now (.rc-group-event), not by
-            // this positioning logic, since month view has no time columns. ──
+            // ── Record Centre — every slot (month: one per day, week/day:
+            // one per day+time) is always a group now, even with just one
+            // record in it. Wire eye clicks, then return — there's no
+            // positioning hack needed here any more, since there's never
+            // more than one FullCalendar event competing for the same time
+            // slot. That's the actual fix for the old same-time stacking
+            // problem: removing the thing that caused it, not patching
+            // around it with width/left math. ──────────────────────────────
             if (info.event.extendedProps.isRecordCentreGroup) {
                 info.el.querySelectorAll('.rc-eye-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -308,22 +317,7 @@ function initCalendar() {
                 return;
             }
 
-            // ── Record Centre — week/day view, one event per record, slotted
-            // at its real time. Wire the eye click, then deliberately fall
-            // through to the same side-by-side positioning logic below that
-            // manual posts use — colIndex/colTotal works identically either
-            // way, so this reuses it rather than duplicating it. ──────────────
-            if (info.event.extendedProps.isRecordCentreSingle) {
-                info.el.querySelectorAll('.rc-eye-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const card = btn.closest('.rc-card');
-                        if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
-                    });
-                });
-                // no return — falls through on purpose
-            }
-
+            // ── Manual posts only, below this line — completely unchanged ──
             const view = info.view.type;
             if (view !== 'timeGridWeek' && view !== 'timeGridDay') return;
 
@@ -507,21 +501,23 @@ function addRecordCentreCardsToCalendar(records) {
 
     // Defensive cleanup — without this, every datesSet refresh ADDS new
     // Record Centre events on top of whatever's already there, rather
-    // than replacing them. Stale events from an earlier fetch (or test
-    // data added via the console) can end up sitting alongside current
-    // ones, rendering with whatever the page state was when THEY were
-    // added — which is exactly what a "mixture of containers" looks like.
+    // than replacing them.
     calendar.getEvents()
-        .filter(e => e.extendedProps.isRecordCentreGroup || e.extendedProps.isRecordCentreSingle)
+        .filter(e => e.extendedProps.isRecordCentreGroup)
         .forEach(e => e.remove());
 
+    // "First come first" — order is decided by actual Record Centre
+    // registration order (the `created` timestamp), never by whatever
+    // order the fetch happened to return them in, and never left to
+    // FullCalendar's own same-time collision handling.
+    const sorted = [...records].sort((a, b) => (a.created || '').localeCompare(b.created || ''));
+
     if (view !== 'timeGridWeek' && view !== 'timeGridDay') {
-        // Month view — group by day, one FullCalendar event per day, holding
-        // every Record Centre card for that day. The 2-up wrap grid lives
-        // entirely inside that single event's own HTML, so FullCalendar
-        // never has to stack multiple harnesses on the same day.
+        // Month — one event per day. Simple 2-row card now (Category tab /
+        // Time+Platform) — the day is already obvious from the grid
+        // position, so it doesn't need repeating inside the card too.
         const byDay = {};
-        records.forEach(r => {
+        sorted.forEach(r => {
             const day = parseRecordCalendarDate(r.date);
             if (!day) return;
             (byDay[day] = byDay[day] || []).push(r);
@@ -530,109 +526,112 @@ function addRecordCentreCardsToCalendar(records) {
         console.log('✅ Adding', Object.keys(byDay).length, 'day-group(s) to month view:', Object.keys(byDay));
 
         Object.entries(byDay).forEach(([day, dayRecords]) => {
-            dayRecords.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             calendar.addEvent({
                 id: `rc-group-${day}`,
                 start: day,
                 allDay: true,
                 classNames: ['rc-group-event'],
-                extendedProps: { isRecordCentreGroup: true, records: dayRecords }
+                extendedProps: { isRecordCentreGroup: true, records: dayRecords, viewMode: 'month' }
             });
         });
         return;
     }
 
-    // Week/Day view — one event per record, placed at its actual time so it
-    // lands in the correct hour row rather than the all-day banner. Same
-    // 1-minute same-timestamp offset trick loadPosts() already uses, so two
-    // records at an identical time still land in the same column instead of
-    // FullCalendar pushing one into the next day.
+    // Week/Day — one event per day+time slot, holding EVERY record that
+    // shares that exact slot together. This is what actually fixes the
+    // old same-time stacking problem: there's only ever one FullCalendar
+    // event per slot now, so there's nothing left for FullCalendar to
+    // collide-resolve or stack. Multiple records at the same slot flex-wrap
+    // inside that one event's own HTML instead — sorted "first come first"
+    // from the sort above, not by position-juggling after the fact.
     const slotGroups = {};
-    records.forEach(r => {
+    sorted.forEach(r => {
         const day = parseRecordCalendarDate(r.date);
         if (!day) return;
         const slotKey = `${day}_${r.time || 'allday'}`;
         (slotGroups[slotKey] = slotGroups[slotKey] || []).push(r);
     });
 
-    let placed = 0;
-    Object.values(slotGroups).forEach(group => {
-        group.forEach((r, idx) => {
-            const day = parseRecordCalendarDate(r.date);
-            let start = day;
-            let end   = undefined;
-            if (r.time) {
-                let hh, mm;
-                if (idx === 0) {
-                    [hh, mm] = r.time.split(':').map(Number);
-                } else {
-                    const [baseHH, baseMM] = r.time.split(':').map(Number);
-                    const totalMins = (baseHH || 0) * 60 + (baseMM || 0) + idx;
-                    hh = Math.floor(totalMins / 60) % 24;
-                    mm = totalMins % 60;
-                }
-                const oh = String(hh).padStart(2, '0');
-                const om = String(mm).padStart(2, '0');
-                start = `${day}T${oh}:${om}:00`;
+    Object.entries(slotGroups).forEach(([slotKey, slotRecords]) => {
+        const sepIdx = slotKey.lastIndexOf('_');
+        const day     = slotKey.slice(0, sepIdx);
+        const timeKey = slotKey.slice(sepIdx + 1);
 
-                // Explicit end — 45 minutes gives enough box height for the
-                // four-line layout without relying on a default duration
-                // setting that may not apply in this code path.
-                const endTotalMins = hh * 60 + mm + 90;
-                const eh = String(Math.floor(endTotalMins / 60) % 24).padStart(2, '0');
-                const em = String(endTotalMins % 60).padStart(2, '0');
-                end = `${day}T${eh}:${em}:00`;
-            }
-            calendar.addEvent({
-                id: `rc-single-${r.id}`,
-                start,
-                end,
-                allDay: !r.time,
-                classNames: ['rc-single-event'],
-                extendedProps: {
-                    isRecordCentreSingle: true,
-                    record: r,
-                    colIndex: idx,
-                    colTotal: group.length
-                }
-            });
-            placed++;
+        let start = day;
+        let end   = undefined;
+        if (timeKey !== 'allday') {
+            start = `${day}T${timeKey}:00`;
+            const [hh, mm]  = timeKey.split(':').map(Number);
+            const endTotal  = hh * 60 + mm + 90; // 90 min — enough box height for the full card
+            const eh = String(Math.floor(endTotal / 60) % 24).padStart(2, '0');
+            const em = String(endTotal % 60).padStart(2, '0');
+            end = `${day}T${eh}:${em}:00`;
+        }
+
+        calendar.addEvent({
+            id: `rc-group-${slotKey}`,
+            start, end,
+            allDay: timeKey === 'allday',
+            classNames: ['rc-group-event'],
+            extendedProps: { isRecordCentreGroup: true, records: slotRecords, viewMode: view }
         });
     });
-    console.log('✅ Placed', placed, 'Record Centre event(s) in', view);
+    console.log('✅ Placed', Object.keys(slotGroups).length, 'Record Centre slot-group(s) in', view);
 }
 
-function renderRecordCentreGroup(records) {
-    return `<div style="display:flex; flex-wrap:wrap; gap:5px; width:100%; align-items:flex-start; align-content:flex-start;">
-        ${records.map(renderRecordCentreCard).join('')}
-    </div>`;
-}
-
-function renderRecordCentreCard(r) {
+// ── MONTH — simple 2-row card ────────────────────────────────────────
+// Row 1: category, in the format colour. Row 2: time + platform. The
+// day/date isn't repeated here — the calendar grid already shows it.
+function renderMonthCard(r) {
     const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
-
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-        return `<span style="
-            background: ${info.color};
-            color: #fff;
-            font-weight: 700;
-            font-size: 8px;
-            padding: 1px 3px;
-            border-radius: 2px;
-            margin-right: 2px;
-            white-space: nowrap;
-        ">${info.abbr}</span>`;
+        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
     }).join('');
-
-    // Real eye/view icon — same SVG as icons.js's icon('view').
-    const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
-
-    const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            flex: 0 0 calc(50% - 2.5px);
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(45, 27, 78, 0.85);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        ">
+            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:8px; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.category || 'Untitled'}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:2px 4px; gap:3px;">
+                <span style="font-size:7px; color:rgba(232,213,255,0.9); white-space:nowrap;">${r.time || ''}</span>
+                <span style="display:flex; align-items:center; gap:2px;">${platformBadges}</span>
+            </div>
+        </div>`;
+}
+
+function renderMonthGroup(records) {
+    return `<div style="display:flex; flex-wrap:wrap; gap:4px; width:100%; align-items:flex-start; align-content:flex-start;">
+        ${records.map(renderMonthCard).join('')}
+    </div>`;
+}
+
+// ── WEEK/DAY — the exact original square card, moved here from month.
+// Category tab (coloured) / day+date / time / platform + eye. Fixed-size
+// flex item: width comes from a CSS class (.rc-card--week is forced to
+// exactly half a row; .rc-card--day is a fixed width that wraps
+// naturally once a row runs out of space) — same card, different CSS,
+// no separate render path needed per view. ───────────────────────────
+function renderTimedSquareCard(r, sizeClass) {
+    const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
+    const platformBadges = (r.platforms || []).map(p => {
+        const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
+        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
+    }).join('');
+
+    const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
+
+    return `
+        <div class="rc-card ${sizeClass}" data-record-id="${r.id}" style="
             aspect-ratio: 1 / 1;
             align-self: flex-start;
             box-sizing: border-box;
@@ -643,17 +642,7 @@ function renderRecordCentreCard(r) {
             display: flex;
             flex-direction: column;
         ">
-            <div style="
-                background: ${meta.colour};
-                color: ${meta.font};
-                font-weight: 700;
-                font-size: 8px;
-                padding: 1px 3px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                flex-shrink: 0;
-            ">${r.category || 'Untitled'}</div>
+            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:8px; padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">${r.category || 'Untitled'}</div>
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px;">
                 <div style="font-size:7px; color:rgba(232,213,255,0.9); line-height:1.2;">${dayLabel}</div>
                 <div style="font-size:7px; color:rgba(232,213,255,0.9); font-weight:600; line-height:1.2;">${r.time || ''}</div>
@@ -665,63 +654,14 @@ function renderRecordCentreCard(r) {
         </div>`;
 }
 
-// Week/Day view — real vertical room in a time-slot row, unlike month
-// view's tiny square, so this stacks Category / Day / Time / Platform+eye
-// as four separate lines instead of compressing everything into two.
-// Month view's renderRecordCentreCard() above is untouched by this.
-function renderRecordCentreTimedCard(r) {
-    const meta     = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
-    const dayLabel = formatDayLabel(parseRecordCalendarDate(r.date));
-
-    const platformBadges = (r.platforms || []).map(p => {
-        const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-        return `<span style="
-            background: ${info.color};
-            color: #fff;
-            font-weight: 700;
-            font-size: 11px;
-            padding: 2px 7px;
-            border-radius: 3px;
-            margin-right: 4px;
-            white-space: nowrap;
-        ">${info.abbr}</span>`;
-    }).join('');
-
-    const eyeIcon = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
-
-    return `
-        <div class="rc-card" data-record-id="${r.id}" style="
-            width: 100%;
-            max-width: 170px;
-            height: 100%;
-            box-sizing: border-box;
-            background: rgba(45, 27, 78, 0.85);
-            border: 1px solid rgba(155, 89, 182, 0.3);
-            border-radius: 6px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        ">
-            <div style="
-                background: ${meta.colour};
-                color: ${meta.font};
-                font-weight: 700;
-                font-size: 13px;
-                padding: 4px 7px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                flex-shrink: 0;
-            ">${r.category || 'Untitled'}</div>
-            <div style="padding: 4px 7px; color: rgba(232,213,255,0.9); line-height: 1.6; flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 12px;">${dayLabel}</div>
-                <div style="font-size: 12px;">${r.time || ''}</div>
-                <div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
-                    ${platformBadges}
-                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
-                </div>
-            </div>
-        </div>`;
+function renderTimedGroup(records, view) {
+    // Week: forced exactly two per row, as specified. Day: a fixed width
+    // that wraps naturally once a row runs out of space, rather than a
+    // forced count — day has more room, so more can fit before wrapping.
+    const sizeClass = view === 'timeGridWeek' ? 'rc-card--week' : 'rc-card--day';
+    return `<div style="display:flex; flex-wrap:wrap; gap:4px; width:100%; align-items:flex-start;">
+        ${records.map(r => renderTimedSquareCard(r, sizeClass)).join('')}
+    </div>`;
 }
 
 function formatDayLabel(isoDateStr) {
