@@ -259,3 +259,38 @@
   font-family: var(--rc-font);
 }
 .rc-platform-tab.active { background: var(--rc-writing-font); color: #fff; }
+
+/* ── MONTH VIEW: Record Centre day-group squares ─────────────────────
+ * This file used to live bundled with calendar-sizing rules that had
+ * nothing to do with the popup. Deleting the whole file to rebuild the
+ * popup also deleted this — an unrelated fix lost as a side effect of
+ * not auditing everything the old file contained before removing it.
+ *
+ * Two real fixes versus the original, not just a restore:
+ *  - width: auto → width: 100%. "auto" can resolve to shrink-to-content
+ *    in this layout context, so a day with sparse/narrow content could
+ *    genuinely compute a narrower box than a day with fuller content —
+ *    a believable mechanism for "some days look right, some don't."
+ *  - min-height: 0 → a real floor. Zero means a single small card on a
+ *    quiet day has nothing stopping it from collapsing tiny.
+ */
+.fc-daygrid-event.rc-group-event {
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 80px !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Same fix, week/day view — individual timed Record Centre chips need
+ * to fill whatever width their colIndex/colTotal positioning gives
+ * their harness, not shrink to their own content. */
+.fc-timegrid-event.rc-single-event {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+}
