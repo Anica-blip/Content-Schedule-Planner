@@ -283,14 +283,28 @@
   max-height: none !important;
 }
 
-/* Same fix, week/day view — individual timed Record Centre chips need
- * to fill whatever width their colIndex/colTotal positioning gives
- * their harness, not shrink to their own content. */
-.fc-timegrid-event.rc-single-event {
+/* Same fix, week/day view — the grouped event needs to fill whatever
+ * width FullCalendar gives that time slot, not shrink to its own
+ * flex-wrapped content. Renamed from rc-single-event: week/day slots
+ * are always groups now too, never a single competing event. */
+.fc-timegrid-event.rc-group-event {
   width: 100% !important;
   height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
   max-width: none !important;
   max-height: none !important;
+}
+
+/* Week: forced exactly two per row, as specified — a fixed fraction of
+ * the row regardless of how wide that row actually is. */
+.rc-card--week {
+  flex: 0 0 calc(50% - 2px);
+}
+
+/* Day: a fixed width that wraps naturally once a row runs out of room —
+ * day has more horizontal space than week, so more can fit per row
+ * before wrapping, rather than forcing the same fixed count as week. */
+.rc-card--day {
+  flex: 0 0 92px;
 }
