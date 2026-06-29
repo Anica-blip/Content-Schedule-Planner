@@ -604,7 +604,7 @@ function renderMonthCard(r) {
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            flex: 0 0 calc(50% - 2px);
+            flex: 1 1 calc(50% - 2px);
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
             border: 1px solid rgba(155, 89, 182, 0.3);
