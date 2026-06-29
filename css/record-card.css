@@ -298,13 +298,17 @@
 
 /* Week: forced exactly two per row, as specified — a fixed fraction of
  * the row regardless of how wide that row actually is. */
+/* Week: forced exactly two per row, as specified — a fixed fraction of
+ * the row regardless of how wide that row actually is. min-width is the
+ * actual fix here: without it, a narrow day-column had nothing stopping
+ * the card from shrinking past readable, which is what was truncating
+ * "Persona" down to a sliver with no room left for the eye icon at all. */
 .rc-card--week {
   flex: 0 0 calc(50% - 2px);
+  min-width: 100px;
 }
 
-/* Day: a fixed width that wraps naturally once a row runs out of room —
- * day has more horizontal space than week, so more can fit per row
- * before wrapping, rather than forcing the same fixed count as week. */
+/* Day: bigger fixed width — more room than week, so it can afford it. */
 .rc-card--day {
-  flex: 0 0 92px;
+  flex: 0 0 130px;
 }
