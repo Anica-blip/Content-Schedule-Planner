@@ -296,27 +296,16 @@
   max-height: none !important;
 }
 
-/* Week: forced exactly two per row, as specified — a fixed fraction of
- * the row regardless of how wide that row actually is. */
-/* Week: forced exactly two per row, as specified — a fixed fraction of
- * the row regardless of how wide that row actually is. min-width is the
- * actual fix here: without it, a narrow day-column had nothing stopping
- * the card from shrinking past readable, which is what was truncating
- * "Persona" down to a sliver with no room left for the eye icon at all. */
-/* Reverted to the exact mechanism Chef already approved for the original
- * month square card — flex-grow with a 50% basis, not a fixed min-width.
- * A lone card fills the row; two cards split evenly. No artificial floor
- * needed, and nothing for the calendar's own sizing to fight against. */
-/* Reverted to the exact mechanism Chef already approved for the original
- * month square card — flex-grow with a 50% basis, not a fixed min-width.
- * A lone card fills the row; two cards split evenly. The max-width is
- * the real fix this round: without a ceiling, 50% of an unexpectedly
- * wide week-column scales up with it — nothing was stopping it from
- * ballooning. Now it can split 50/50 for the "exactly two" requirement,
- * but never past this fixed cap regardless of the actual column width. */
+/* Week: truly fixed, matching day's mechanism exactly — NOT a percentage
+ * split. The previous version used flex-basis:50% with only a max-width
+ * ceiling, which does nothing to stop two cards splitting a narrow week
+ * column from each landing below 85px — a ceiling only limits how big
+ * something can get, never how small. Every card is always exactly
+ * 85px now, alone or alongside another; flex-wrap decides how many fit
+ * per row based on actual column width, rather than forcing a percentage
+ * split that can shrink past readable. */
 .rc-card--week {
-  flex: 1 1 calc(50% - 2.5px);
-  max-width: 85px;
+  flex: 0 0 85px;
 }
 
 /* Day: same fixed scale as week's cap, for visual consistency between
@@ -324,4 +313,24 @@
  * consistent tiling that wraps, not a 50/50 split like week. */
 .rc-card--day {
   flex: 0 0 85px;
+}
+
+/* Day view has pre-existing rules (in styles.css, written earlier for
+ * manual posts) that apply forceful !important margin/justify-content
+ * overrides directly to .fc-timeGridDay-view's internal structure —
+ * the exact same harness/column elements Record Centre's day cards sit
+ * inside too. That's the most concrete, checkable explanation for why
+ * day's fixed 85px wasn't actually taking effect: those manual-post-only
+ * rules may be reaching Record Centre's cards as a side effect, since
+ * the selectors target shared FullCalendar structure, not anything
+ * specific to manual posts. Maximum-specificity, explicit override so
+ * day view's job here is placement only — never sizing. */
+.fc-timeGridDay-view .fc-timegrid-event.rc-group-event {
+  width: 100% !important;
+  height: 100% !important;
+}
+.fc-timeGridDay-view .rc-card--day {
+  flex: 0 0 85px !important;
+  width: 85px !important;
+  margin: 0 !important;
 }
