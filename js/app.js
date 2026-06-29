@@ -101,21 +101,10 @@ function injectCalendarStyles() {
             overflow: visible !important;
         }
 
-        /* ── MONTH VIEW: Record Centre day-group squares ─────────────────────
-         * The old fixed-size rule above (60×95px, written for the original
-         * tiny manual-post chips) still applies here too, since FullCalendar
-         * tags every month-view event with .fc-daygrid-event regardless of
-         * our own classNames. That cap was squeezing the 2-up squares down
-         * to emoji size and made a 2nd row of cards physically impossible —
-         * there was no room. A more specific selector wins this override. */
-        .fc-daygrid-event.rc-group-event {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 80px !important;
-            max-height: none !important;
-            max-width: none !important;
-            min-width: 0 !important;
-        }
+        /* Record Centre month-view square sizing override now lives in
+         * record-card.css (.fc-daygrid-event.rc-group-event) — kept in one
+         * place only, not duplicated here, to avoid two files quietly
+         * fighting over the same selector with different values. */
 
         /*
          * 2B: FC renders the grid background only.
@@ -516,6 +505,16 @@ async function fetchRecordCentreRecords(startStr, endStr) {
 function addRecordCentreCardsToCalendar(records) {
     const view = calendar.view.type;
 
+    // Defensive cleanup — without this, every datesSet refresh ADDS new
+    // Record Centre events on top of whatever's already there, rather
+    // than replacing them. Stale events from an earlier fetch (or test
+    // data added via the console) can end up sitting alongside current
+    // ones, rendering with whatever the page state was when THEY were
+    // added — which is exactly what a "mixture of containers" looks like.
+    calendar.getEvents()
+        .filter(e => e.extendedProps.isRecordCentreGroup || e.extendedProps.isRecordCentreSingle)
+        .forEach(e => e.remove());
+
     if (view !== 'timeGridWeek' && view !== 'timeGridDay') {
         // Month view — group by day, one FullCalendar event per day, holding
         // every Record Centre card for that day. The 2-up wrap grid lives
@@ -752,22 +751,6 @@ function parseRecordCalendarDate(dateStr) {
     }
     return new Date().toISOString().split('T')[0];
 }
-
-// Console-testable today, no Record Centre session needed:
-// open devtools (F12) → console → type testRecordCentreCards() → enter.
-// Uses the real confirmed date format ("Wed DD.MM", no year) rather than
-// ISO, so this also proves the date parser handles real records, not just
-// the easy case. Falls within the current month already — no need to
-// navigate. Delete this whole function once live data is flowing.
-window.testRecordCentreCards = function() {
-    addRecordCentreCardsToCalendar([
-        { id: 'test-1', category: 'Philosophy',  format: 'SV', date: 'Wed 24.06', time: '17:00', platforms: ['Telegram']  },
-        { id: 'test-2', category: 'Mindset',     format: 'LV', date: 'Wed 24.06', time: '17:00', platforms: ['TikTok']    },
-        { id: 'test-3', category: 'WeeklyRecap', format: 'PC', date: 'Wed 24.06', time: '19:00', platforms: ['Pinterest'] },
-        { id: 'test-4', category: 'QandA',       format: 'SV', date: 'Thu 25.06', time: '12:00', platforms: ['YouTube']   }
-    ]);
-    console.log('✅ Test Record Centre cards added.');
-};
 
 function openCreatePostModal(date = null) {
     currentPost = null;
