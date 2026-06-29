@@ -14,6 +14,8 @@
    input sizing, focus-ring quirks) at the source, not just visually.
    ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
+
 :root {
   --rc-bg-card:        #312e2d;
 
@@ -74,6 +76,7 @@
   flex-direction: column;
   box-shadow: var(--rc-shadow-card);
   font-family: var(--rc-font);
+  line-height: 1.6;
   box-sizing: border-box;
 }
 
