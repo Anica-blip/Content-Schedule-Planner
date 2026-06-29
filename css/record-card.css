@@ -64,8 +64,7 @@
 
 .record-card {
   width: 100%;
-  max-width: 380px;
-  min-height: 520px;
+  max-width: 420px;
   max-height: 90vh;
   background: var(--rc-bg-card);
   border-radius: var(--rc-radius-lg);
