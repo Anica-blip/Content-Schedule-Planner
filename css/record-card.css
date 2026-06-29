@@ -308,29 +308,8 @@
   flex: 0 0 85px;
 }
 
-/* Day: same fixed scale as week's cap, for visual consistency between
- * the two. Stays fixed (not grow) deliberately — day's job is
- * consistent tiling that wraps, not a 50/50 split like week. */
+/* Day mirrors week exactly — same value, same mechanism, nothing
+ * extra layered on top. */
 .rc-card--day {
   flex: 0 0 85px;
-}
-
-/* Day view has pre-existing rules (in styles.css, written earlier for
- * manual posts) that apply forceful !important margin/justify-content
- * overrides directly to .fc-timeGridDay-view's internal structure —
- * the exact same harness/column elements Record Centre's day cards sit
- * inside too. That's the most concrete, checkable explanation for why
- * day's fixed 85px wasn't actually taking effect: those manual-post-only
- * rules may be reaching Record Centre's cards as a side effect, since
- * the selectors target shared FullCalendar structure, not anything
- * specific to manual posts. Maximum-specificity, explicit override so
- * day view's job here is placement only — never sizing. */
-.fc-timeGridDay-view .fc-timegrid-event.rc-group-event {
-  width: 100% !important;
-  height: 100% !important;
-}
-.fc-timeGridDay-view .rc-card--day {
-  flex: 0 0 85px !important;
-  width: 85px !important;
-  margin: 0 !important;
 }
