@@ -296,20 +296,20 @@
   max-height: none !important;
 }
 
-/* Week: truly fixed, matching day's mechanism exactly — NOT a percentage
- * split. The previous version used flex-basis:50% with only a max-width
- * ceiling, which does nothing to stop two cards splitting a narrow week
- * column from each landing below 85px — a ceiling only limits how big
- * something can get, never how small. Every card is always exactly
- * 85px now, alone or alongside another; flex-wrap decides how many fit
- * per row based on actual column width, rather than forcing a percentage
- * split that can shrink past readable. */
+/* Week: exactly 54px square, two comfortably fit per row in a normal
+ * week column width. Day mirrors it — same value, same mechanism.
+ * Previously 85px, and even that never actually rendered correctly:
+ * styles.css had two duplicate, contradictory .fc-timegrid-event-harness
+ * and .fc-timegrid-col-events blocks fighting each other (later one
+ * always won the cascade), plus a hard 50x50px .fc-timegrid-event box
+ * and a 60px .fc-timegrid-slot — all removed there. This file's width
+ * was never the actual problem; the parent chain fighting it was. */
 .rc-card--week {
-  flex: 0 0 85px;
+  flex: 0 0 54px;
 }
 
 /* Day mirrors week exactly — same value, same mechanism, nothing
  * extra layered on top. */
 .rc-card--day {
-  flex: 0 0 85px;
+  flex: 0 0 54px;
 }
