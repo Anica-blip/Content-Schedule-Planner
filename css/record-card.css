@@ -296,20 +296,16 @@
   max-height: none !important;
 }
 
-/* Week: exactly 54px square, two comfortably fit per row in a normal
- * week column width. Day mirrors it — same value, same mechanism.
- * Previously 85px, and even that never actually rendered correctly:
- * styles.css had two duplicate, contradictory .fc-timegrid-event-harness
- * and .fc-timegrid-col-events blocks fighting each other (later one
- * always won the cascade), plus a hard 50x50px .fc-timegrid-event box
- * and a 60px .fc-timegrid-slot — all removed there. This file's width
- * was never the actual problem; the parent chain fighting it was. */
+/* Week: exactly 52px square (Chef's original spec — the 54px used
+ * initially was a rounding of the same idea). Two comfortably fit per
+ * row in a normal week column width. Day mirrors it — same value,
+ * same mechanism. */
 .rc-card--week {
-  flex: 0 0 54px;
+  flex: 0 0 52px;
 }
 
 /* Day mirrors week exactly — same value, same mechanism, nothing
  * extra layered on top. */
 .rc-card--day {
-  flex: 0 0 54px;
+  flex: 0 0 52px;
 }
