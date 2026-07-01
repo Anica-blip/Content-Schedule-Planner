@@ -237,6 +237,29 @@ function initCalendar() {
                         if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
                     });
                 });
+
+                // Week/day only: FullCalendar's timegrid row height is a
+                // fixed time-based value (unlike month, which auto-grows).
+                // The synthetic 90-min duration gives room for exactly one
+                // row of cards. If a slot has enough records to wrap onto
+                // a second row, grow just this harness to fit — measured
+                // from the actual rendered content, not guessed from a
+                // record count, since how many fit per row depends on the
+                // real column width at render time.
+                const view = info.view.type;
+                if (view === 'timeGridWeek' || view === 'timeGridDay') {
+                    const harness = info.el.closest('.fc-timegrid-event-harness');
+                    const group   = info.el.querySelector('.rc-group-wrapper');
+                    if (harness && group) {
+                        requestAnimationFrame(() => {
+                            const neededPx  = group.scrollHeight;
+                            const currentPx = harness.offsetHeight;
+                            if (neededPx > currentPx) {
+                                harness.style.setProperty('height', `${neededPx}px`, 'important');
+                            }
+                        });
+                    }
+                }
             }
         }
     });
@@ -431,7 +454,7 @@ function renderTimedSquareCard(r, sizeClass) {
             display: flex;
             flex-direction: column;
         ">
-            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:7.5px; padding:1.5px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; line-height:1.3;">${r.category || 'Untitled'}</div>
+            <div style="background:${meta.colour}; color:${meta.font}; font-weight:700; font-size:9px; padding:2px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; line-height:1.2;">${r.category || 'Untitled'}</div>
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:space-evenly; padding:1px; min-height:0;">
                 <div style="font-size:9px; font-weight:700; color:rgba(232,213,255,0.95); line-height:1.15;">${dateLabel}</div>
                 <div style="font-size:9px; font-weight:700; color:rgba(232,213,255,0.95); line-height:1.15;">${r.time || ''}</div>
@@ -447,8 +470,10 @@ function renderTimedGroup(records, view) {
     // Week: forced exactly two per row, as specified. Day: a fixed width
     // that wraps naturally once a row runs out of space, rather than a
     // forced count — day has more room, so more can fit before wrapping.
+    // rc-group-wrapper is a stable hook eventDidMount uses to measure
+    // whether this group actually needed to wrap onto a second row.
     const sizeClass = view === 'timeGridWeek' ? 'rc-card--week' : 'rc-card--day';
-    return `<div style="display:flex; flex-wrap:wrap; gap:4px; width:100%; align-items:flex-start;">
+    return `<div class="rc-group-wrapper" style="display:flex; flex-wrap:wrap; gap:4px; width:100%; align-items:flex-start;">
         ${records.map(r => renderTimedSquareCard(r, sizeClass)).join('')}
     </div>`;
 }
