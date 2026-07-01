@@ -79,22 +79,6 @@ body {
 .fc-button { background: var(--light-purple) !important; border: none !important; }
 .fc-day-today { background: rgba(155, 89, 182, 0.15) !important; }
 
-/* Force side-by-side layout for events at same time in day/week view */
-.fc-timegrid-col-events {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-    align-items: flex-start !important;
-}
-
-.fc-timegrid-event-harness {
-    position: relative !important;
-    flex: 1 1 48% !important;
-    max-width: 48% !important;
-    min-width: 48% !important;
-}
-
 /* Month view - compact events */
 .fc-daygrid-event {
     margin: 1px 0 !important;
@@ -195,21 +179,11 @@ body {
     align-items: stretch !important;
 }
 
-/* Week/Day view events - Square containers */
-.fc-timegrid-event {
-    height: 50px !important;
-    width: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-    margin: 0 !important;
-}
-
-/* Expand time slots to fit containers */
+/* Expand time slots to fit containers — reduced from 60px so a 90-min
+   record-centre card (3 slots) renders at ~54px tall instead of 180px */
 .fc-timegrid-slot {
-    height: 60px !important;
-    min-height: 60px !important;
+    height: 18px !important;
+    min-height: 18px !important;
 }
 
 /* Time labels styling */
@@ -221,46 +195,6 @@ body {
 /* Week view - 7 columns */
 .fc-timegrid-col {
     min-width: 100px !important;
-}
-
-/* Allow multiple events at same time to stack horizontally */
-.fc-timegrid-col-events {
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    gap: 2px !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-}
-
-/* Allow multiple events at same time to appear side by side */
-.fc-timegrid-event-harness {
-    display: inline-block !important;
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    vertical-align: top !important;
-}
-
-/* Day view specific - force left alignment in rows */
-.fc-view-harness-active > .fc-view-harness > .fc-timeGridDay-view .fc-timegrid-col-events,
-.fc-timeGridDay-view .fc-timegrid-col-events {
-    justify-content: flex-start !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-}
-
-/* Force event harness to left align in day view */
-.fc-timeGridDay-view .fc-timegrid-event-harness {
-    margin-left: 0 !important;
-    margin-right: 2px !important;
-}
-
-/* Prevent centering in day view rows */
-.fc-timeGridDay-view .fc-timegrid-col-frame {
-    display: flex !important;
-    justify-content: flex-start !important;
 }
 
 /* Light background already in event content */
@@ -289,18 +223,6 @@ body {
     min-height: 40px !important;
     max-width: 40px !important;
     max-height: 40px !important;
-    object-fit: cover !important;
-    flex-shrink: 0 !important;
-}
-
-/* Week/Day view images - 25px for square containers */
-.fc-timegrid-event img {
-    width: 25px !important;
-    height: 25px !important;
-    min-width: 25px !important;
-    min-height: 25px !important;
-    max-width: 25px !important;
-    max-height: 25px !important;
     object-fit: cover !important;
     flex-shrink: 0 !important;
 }
