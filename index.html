@@ -23,11 +23,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Upgraded from 6.1.10 → 6.1.19 (latest stable, no breaking changes) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=1.1.5">
+    <link rel="stylesheet" href="css/styles.css?v=1.1.6">
     <link rel="stylesheet" href="css/navigation.css?v=1.0.5">
     <link rel="stylesheet" href="css/nav-toggle.css?v=1.0.7">
     <!-- Card 1/2/3 read-only popup styling — written fresh, not a clone. Scoped, doesn't touch anything above -->
-    <link rel="stylesheet" href="css/record-card.css?v=2.1.2">
+    <link rel="stylesheet" href="css/record-card.css?v=2.1.3">
 
     <!-- Supabase Configuration - Load from config.js -->
     <script src="config.js"></script>
@@ -45,9 +45,6 @@
             <a href="https://anica-blip.github.io/3c-content-record-centre/" target="_blank" rel="noopener noreferrer" class="btn btn-icon-svg" title="Open 3C Content Record Centre">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 9v4l3 2"/><path d="M19.4 7.5a9 9 0 1 1-2-3" stroke-dasharray="1 3"/></svg>
             </a>
-            <button class="btn btn-icon-svg" onclick="openCreatePostModal()" title="Create New Post">
-                <svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M16 8a4 4 0 0 1 0 8M19 5a8 8 0 0 1 0 14"/></svg>
-            </button>
             <button class="btn btn-icon-svg" onclick="window.location.href='links-manager.html'" title="Manage Navigation Links">
                 <svg viewBox="0 0 24 24"><path d="M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9"/><path d="M12 7l3 5-3 5-3-5Z"/></svg>
             </button>
@@ -103,64 +100,16 @@
         </div>
     </div>
 
-    <div id="postModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Create New Post</h2>
-                <button class="close-btn" onclick="closePostModal()">&times;</button>
-            </div>
-            <!-- FIX: onsubmit aligned to actual function name in app.js (handlePostSubmit) -->
-            <form id="postForm" onsubmit="handlePostSubmit(event)">
-                <input type="hidden" id="postId">
-                <div class="form-group">
-                    <label class="form-label">Platform *</label>
-                    <!-- FIX: added missing </select> closing tag -->
-                    <select id="platform" class="form-select" required>
-                        <option value="">Select platform...</option>
-                        <option value="instagram">📸 Instagram</option>
-                        <option value="facebook">📘 Facebook</option>
-                        <option value="linkedin">💼 LinkedIn</option>
-                        <option value="twitter">🐦 Twitter/X</option>
-                        <option value="youtube">📺 YouTube</option>
-                        <option value="tiktok">🎵 TikTok</option>
-                        <option value="telegram">✈️ Telegram</option>
-                        <option value="pinterest">📌 Pinterest</option>
-                        <option value="whatsapp">💬 WhatsApp Business</option>
-                        <option value="discord">🎮 Discord</option>
-                        <option value="forum">💭 Forum</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Title *</label>
-                    <input type="text" id="title" class="form-input" placeholder="Post title..." required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Content *</label>
-                    <textarea id="content" class="form-textarea" placeholder="Post content..." required></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex:1;">
-                        <label class="form-label">Date *</label>
-                        <input type="date" id="scheduledDate" class="form-input" required>
-                    </div>
-                    <div class="form-group" style="flex:1;">
-                        <label class="form-label">Time</label>
-                        <input type="time" id="scheduledTime" class="form-input">
-                    </div>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="submit" class="btn btn-success" style="flex:1;">Save</button>
-                    <button type="button" class="btn btn-secondary" onclick="closePostModal()">Cancel</button>
-                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display:none;" onclick="handleDeletePost()">Delete</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Old manual-post "Create New Post" modal removed along with its
+         app.js functions (openCreatePostModal, handlePostSubmit, etc.) —
+         it was conflicting with the Record Centre card system and is due
+         for a proper rebuild later, matching the container style, per
+         SETUP.md "old schedule". -->
 
 
     <script src="js/auth.js?v=1.0.0"></script>
     <script src="js/supabaseAPI.js?v=1.1.3"></script>
-    <script src="js/app.js?v=1.3.5"></script>
+    <script src="js/app.js?v=1.3.6"></script>
     <script src="js/navigation.js?v=1.0.3"></script>
     <!-- Card 1/2/3 read-only popup — plain script, no imports needed, self-contained -->
     <script src="js/record-popup.js?v=2.0.1"></script>
