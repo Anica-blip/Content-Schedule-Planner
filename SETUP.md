@@ -17,7 +17,7 @@ A social media content calendar (FullCalendar.js + Supabase + GitHub Pages). Exi
 
 ## 2. The Bridge to Content Record Centre — Core Architecture
 
-**Decided and built:** the Planner never stores a copy of real content. It stores only the lightweight calendar button info — category, format, day, date, time, platform. Small, cheap records. The actual Card 1/2/3 content always lives in exactly one place: Content Record Centre's R2 storage.
+**Decided and built:** the Planner never stores a copy of real content. It stores only the lightweight calendar button info — category, format, date, time, platform. Small, cheap records. The actual Card 1/2/3 content always lives in exactly one place: Content Record Centre's R2 storage.
 
 **Why:** avoids duplicate data, avoids ballooning Supabase table costs (a real, stated budget constraint), and means there's only ever one true copy of any piece of content to keep consistent.
 
