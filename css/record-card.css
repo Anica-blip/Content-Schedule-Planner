@@ -133,12 +133,15 @@
   word-break: break-word;
   min-width: 0;
 }
-/* Card 1's Title/Index are real <textarea> fields in Record Centre, and
-   EVERY textarea there has a flat `min-height: 90px` floor (a global
-   rule, not tied to the rows attribute) — confirmed directly from the
-   real stylesheet, not estimated from rows × line-height. */
+/* Card 1's Title/Index show as short text here (this is a read-only
+   value div, not the real editable textarea Record Centre uses) — so
+   instead of matching that textarea's flat 90px floor, this reserves
+   exactly what two lines need at this field's actual font-size/line-
+   height: 14.72px × line-height 1.6 = 23.55px per line × 2 = 47.1px.
+   A one-line title no longer leaves a large empty gap before the next
+   field; a two-line title still has the room it needs, with no clip. */
 .record-card__field-value--wrap {
-  min-height: 90px;
+  min-height: 48px;
 }
 
 .record-card__footer {
