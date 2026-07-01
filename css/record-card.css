@@ -61,13 +61,14 @@
 .card-overlay.active { display: flex; }
 
 /* ── The card itself — portrait, fixed max-width, no min-height.
-   This exact shape (420px max-width, height driven by content up to
-   90vh) is what makes it portrait. A wider max-width or any added
-   min-height is what turns this landscape — verified against Record
-   Centre's real card directly, not guessed. ───────────────────────── */
+   Narrowed from 420px to 340px: field values here (Falcon, post card,
+   Wed 01.07, etc.) are short, so 420px was leaving a large empty gap
+   on the right of every field — this width fits the actual content
+   instead. Height still driven by content up to 90vh; no min-height
+   added, since that's still what would turn this landscape. ───────── */
 .record-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 340px;
   max-height: 90vh;
   background: var(--rc-bg-card);
   border-radius: var(--rc-radius-lg);
@@ -170,13 +171,13 @@
 
 /* ── Platform letters — read-only here, just shows which are active.
    No add/remove interaction; that stays in Record Centre. ──────────── */
-.platform-letter-row { display: flex; gap: 8px; flex: 1; }
+.platform-letter-row { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
 .platform-letter {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--rc-border-strong);
   color: var(--rc-text-faint);
   border-radius: 8px;
-  padding: 6px 14px;
+  padding: 6px 10px;
   font-size: 13.6px;
   font-weight: 800;
   letter-spacing: 0.04em;
