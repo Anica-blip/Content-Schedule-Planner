@@ -122,8 +122,8 @@ function showRecordPopup(record) {
                 <div class="record-card__field">
                     <div class="record-card__field-label">Date</div>
                     <div class="record-card__field-value">${rcEsc(record.date || '—')}</div>
-                    <div class="record-card__field-label" style="margin-left:10px;">Time</div>
-                    <div class="record-card__field-value">${rcEsc(record.time || '—')}</div>
+                    <div class="record-card__field-label" style="margin-left:28px;">Time</div>
+                    <div class="record-card__field-value" style="width:46px; flex:0 0 auto; margin-left:-8px; white-space:nowrap;">${rcEsc(record.time || '—')}</div>
                 </div>
                 ${field('Format', record.format)}
                 <div class="record-card__field">
