@@ -395,7 +395,7 @@ function addRecordCentreCardsToCalendar(records) {
 // ── MONTH — simple 2-row card ────────────────────────────────────────
 // Row 1: category, in the format colour. Row 2: time + platform. The
 // day/date isn't repeated here — the calendar grid already shows it.
-function renderMonthCard(r) {
+function renderMonthCard(r, isSingle) {
     const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
@@ -404,7 +404,7 @@ function renderMonthCard(r) {
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            flex: 0 1 calc(50% - 2px);
+            flex: 0 1 ${isSingle ? '100%' : 'calc(50% - 2px)'};
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
             border: 1px solid rgba(155, 89, 182, 0.3);
@@ -422,8 +422,9 @@ function renderMonthCard(r) {
 }
 
 function renderMonthGroup(records) {
+    const isSingle = records.length === 1;
     return `<div style="display:flex; flex-wrap:wrap; gap:4px; width:100%; align-items:flex-start; align-content:flex-start;">
-        ${records.map(renderMonthCard).join('')}
+        ${records.map(r => renderMonthCard(r, isSingle)).join('')}
     </div>`;
 }
 
