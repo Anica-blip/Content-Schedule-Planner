@@ -25,7 +25,7 @@ const PLATFORMS = {
     facebook:  { name: 'Facebook',  abbr: 'FB', icon: '📘', color: '#1877f2' },
     linkedin:  { name: 'LinkedIn',  abbr: 'LK', icon: '💼', color: '#0077b5' },
     twitter:   { name: 'Twitter/X', abbr: 'TX', icon: '🐦', color: '#1da1f2' },
-    youtube:   { name: 'YouTube',   abbr: 'YT', icon: '📺', color: '#ff0000' },
+    youtube:   { name: 'YouTube',   abbr: 'YT', icon: '📺', color: '#ffffff', font: '#1a1a1a' },
     tiktok:    { name: 'TikTok',    abbr: 'TK', icon: '🎵', color: '#000000' },
     telegram:  { name: 'Telegram',  abbr: 'TG', icon: '✈️', color: '#0088cc' },
     pinterest: { name: 'Pinterest', abbr: 'PI', icon: '📌', color: '#bd081c' },
@@ -399,12 +399,12 @@ function renderMonthCard(r) {
     const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
+        return `<span style="background:${info.color}; color:${info.font || '#fff'}; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
     }).join('');
 
     return `
         <div class="rc-card" data-record-id="${r.id}" style="
-            flex: 1 1 calc(50% - 2px);
+            flex: 0 1 calc(50% - 2px);
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
             border: 1px solid rgba(155, 89, 182, 0.3);
@@ -436,7 +436,7 @@ function renderTimedSquareCard(r, sizeClass) {
     const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
-        return `<span style="background:${info.color}; color:#fff; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
+        return `<span style="background:${info.color}; color:${info.font || '#fff'}; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
     }).join('');
 
     const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
