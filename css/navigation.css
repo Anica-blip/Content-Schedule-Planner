@@ -2,9 +2,9 @@
 #nav-panel {
     position: fixed;
     left: -80px;
-    top: 155px;
+    top: 110px;
     width: 80px;
-    max-height: calc(100vh - 175px);
+    max-height: calc(100vh - 130px);
     background: transparent;
     transition: left 0.3s ease;
     z-index: 9999;
