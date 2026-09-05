@@ -319,11 +319,17 @@ function addRecordCentreCardsToCalendar(records) {
         .filter(e => e.extendedProps.isRecordCentreGroup)
         .forEach(e => e.remove());
 
-    // "First come first" — order is decided by actual Record Centre
-    // registration order (the `created` timestamp), never by whatever
-    // order the fetch happened to return them in, and never left to
-    // FullCalendar's own same-time collision handling.
-    const sorted = [...records].sort((a, b) => (a.created || '').localeCompare(b.created || ''));
+    // Chronological first — a day's cards must read in scheduled-time
+    // order (08:30 before 12:30), regardless of which one Chef entered
+    // into Record Centre first. "First come first" (the `created`
+    // timestamp) only breaks a tie when two records share the exact
+    // same day AND time — never left to FullCalendar's own same-time
+    // collision handling either way.
+    const sortKey = r => `${parseRecordCalendarDate(r.date)}T${r.time || '00:00'}`;
+    const sorted = [...records].sort((a, b) => {
+        const byTime = sortKey(a).localeCompare(sortKey(b));
+        return byTime !== 0 ? byTime : (a.created || '').localeCompare(b.created || '');
+    });
 
     if (view !== 'timeGridWeek' && view !== 'timeGridDay') {
         // Month — one event per day. Simple 2-row card now (Category tab /
