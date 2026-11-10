@@ -54,6 +54,12 @@ function resolveFormatCode(format) {
     return FORMAT_ABBR_LOOKUP[format] || format;
 }
 
+// Calendar-only items typed straight into the Planner (see
+// planner-events.js) have no format, so they get their own category-tab
+// colour: dark grey-blue with white bold text — easy to tell apart from
+// every SV / LV / PC Record Centre card.
+const PLANNER_EVENT_META = { colour: '#363d46', font: '#ffffff' };
+
 const RECORD_CENTRE_API = 'https://recordmanagement.threadcommand.center';
 
 async function initApp() {
@@ -189,6 +195,8 @@ function initCalendar() {
             if (info.event.extendedProps.isRecordCentreGroup) {
                 const card = info.jsEvent.target.closest('.rc-card');
                 if (card?.dataset.recordId) openRecordCentreCardView(card.dataset.recordId);
+                // Planner's own calendar-only items open the edit / delete form.
+                else if (card?.dataset.plannerId) openPlannerEventModal(card.dataset.plannerId);
             }
         },
         eventContent: function(arg) {
@@ -273,8 +281,35 @@ function initCalendar() {
 // on this calendar. Never written back from the Planner.
 
 async function loadAndRenderRecordCentreCards(startStr, endStr) {
-    const records = await fetchRecordCentreRecords(startStr, endStr);
-    addRecordCentreCardsToCalendar(records);
+    // Record Centre records and the Planner's own calendar-only items are
+    // loaded together and drawn through the exact same card/group code.
+    const [records, plannerItems] = await Promise.all([
+        fetchRecordCentreRecords(startStr, endStr),
+        fetchPlannerEventsInRange(startStr, endStr)
+    ]);
+    addRecordCentreCardsToCalendar([...records, ...plannerItems]);
+}
+
+// Calendar-only items (planner-events.js). Never throws — if the items
+// can't be loaded the calendar just shows the Record Centre cards as before.
+async function fetchPlannerEventsInRange(startStr, endStr) {
+    if (typeof peFetchEvents !== 'function') return [];
+    const items = await peFetchEvents();
+    const startDate = startStr.split('T')[0];
+    const endDate   = endStr.split('T')[0];
+    return items.filter(r => {
+        const day = parseRecordCalendarDate(r.date);
+        return day && day >= startDate && day <= endDate;
+    });
+}
+
+// Re-draws the current view after an item is added, edited or deleted.
+async function refreshCalendarItems() {
+    if (!calendar) return;
+    await loadAndRenderRecordCentreCards(
+        calendar.formatIso(calendar.view.activeStart),
+        calendar.formatIso(calendar.view.activeEnd)
+    );
 }
 
 async function fetchRecordCentreRecords(startStr, endStr) {
@@ -402,14 +437,17 @@ function addRecordCentreCardsToCalendar(records) {
 // Row 1: category, in the format colour. Row 2: time + platform. The
 // day/date isn't repeated here — the calendar grid already shows it.
 function renderMonthCard(r, isSingle) {
-    const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
+    const meta = r.isPlannerEvent
+        ? PLANNER_EVENT_META
+        : (FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' });
+    const idAttr = r.isPlannerEvent ? `data-planner-id="${r.id}"` : `data-record-id="${r.id}"`;
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
         return `<span style="background:${info.color}; color:${info.font || '#fff'}; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
     }).join('');
 
     return `
-        <div class="rc-card" data-record-id="${r.id}" style="
+        <div class="rc-card" ${idAttr} style="
             flex: 0 1 ${isSingle ? '100%' : 'calc(50% - 2px)'};
             box-sizing: border-box;
             background: rgba(45, 27, 78, 0.85);
@@ -440,7 +478,10 @@ function renderMonthGroup(records) {
 // class (.rc-card--week / .rc-card--day, both 54px) — same card,
 // different CSS, no separate render path needed per view. ────────────
 function renderTimedSquareCard(r, sizeClass) {
-    const meta = FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' };
+    const meta = r.isPlannerEvent
+        ? PLANNER_EVENT_META
+        : (FORMAT_META[resolveFormatCode(r.format)] || { colour: '#9b59b6', font: '#ffffff' });
+    const idAttr = r.isPlannerEvent ? `data-planner-id="${r.id}"` : `data-record-id="${r.id}"`;
     const platformBadges = (r.platforms || []).map(p => {
         const info = PLATFORMS[p.toLowerCase()] || { abbr: '??', color: '#9b59b6' };
         return `<span style="background:${info.color}; color:${info.font || '#fff'}; font-weight:700; font-size:8px; padding:1px 3px; border-radius:2px; margin-right:2px; white-space:nowrap;">${info.abbr}</span>`;
@@ -449,8 +490,15 @@ function renderTimedSquareCard(r, sizeClass) {
     const eyeIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
     const dateLabel = formatDateOnly(parseRecordCalendarDate(r.date));
 
+    // Record Centre cards show the eye (view); the Planner's own items
+    // show a pencil (edit) — the click itself is handled by eventClick.
+    const pencilIcon = `<svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="M13.5 6.5l4 4"/></svg>`;
+    const actionBtn = r.isPlannerEvent
+        ? `<span class="rc-edit-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="Edit item">${pencilIcon}</span>`
+        : `<span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>`;
+
     return `
-        <div class="rc-card ${sizeClass}" data-record-id="${r.id}" style="
+        <div class="rc-card ${sizeClass}" ${idAttr} style="
             aspect-ratio: 1 / 1;
             align-self: flex-start;
             box-sizing: border-box;
@@ -467,7 +515,7 @@ function renderTimedSquareCard(r, sizeClass) {
                 <div style="font-size:9px; font-weight:700; color:rgba(232,213,255,0.95); line-height:1.15;">${r.time || ''}</div>
                 <div style="display:flex; align-items:center; gap:2px;">
                     ${platformBadges}
-                    <span class="rc-eye-btn" style="cursor:pointer; display:inline-flex; color:#fff;" title="View content">${eyeIcon}</span>
+                    ${actionBtn}
                 </div>
             </div>
         </div>`;
